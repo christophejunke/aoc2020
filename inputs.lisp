@@ -12,3 +12,12 @@
 (defmacro with-input ((stream name) &body body)
   `(with-open-file (,stream (input-file ,name))
      ,@body))
+
+(defmacro do-input-lines ((line name &optional result) &body body)
+  (with-gensyms (stream)
+    `(with-input (,stream ,name)
+       (loop :for ,line := (read-line ,stream nil nil)
+             :while ,line
+             :do (progn ,@body)
+             :finally (return ,result)))))
+
