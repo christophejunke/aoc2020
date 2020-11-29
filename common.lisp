@@ -1,9 +1,13 @@
 (defpackage :aoc2020
-  (:use :cl :alexandria)
-  (:export #:do-input-lines
+  (:use . #1=(:cl :alexandria :ppcre :optima))
+  (:export #:fold-input-lines
+           #:do-input-lines
            #:with-input
+           #:int
+           #:word
+           #:letter
            .
-           #.(aoc2020.utils:external-symbols :cl :alexandria)))
+           #.(aoc2020.utils:external-symbols . #1#)))
 
 (in-package :aoc2020)
 
@@ -27,3 +31,23 @@
              :while ,line
              :do (progn ,@body)
              :finally (return ,result)))))
+
+(defun fold-input-lines (input function &optional accumulator)
+  (do-input-lines (line input accumulator)
+    (setf accumulator (funcall function line accumulator))))
+
+(define-parse-tree-synonym int
+    (:register
+     (:sequence
+      (:greedy-repetition 0 1 (:char-class #\- #\+))
+      (:greedy-repetition 1 nil :digit-class))))
+
+(define-parse-tree-synonym letter
+    (:register :word-char-class))
+
+(define-parse-tree-synonym word
+    (:register
+     (:sequence
+      :word-boundary
+      (:greedy-repetition 1 nil :word-char-class)
+      :word-boundary)))
