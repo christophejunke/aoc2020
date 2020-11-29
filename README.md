@@ -10,6 +10,8 @@ Twitter thread: https://twitter.com/chrsnjk/status/1332126685819449344
 
 - Each day will be associated with a different branch (`d01`, `d02`, etc.)
 
+- One package per day
+
 - I'll use libraries if necessary, as a way to show what can be done in actual programs
 
 - I'll comment the code to explain difficulties, but some knowledge of Lisp is assumed

@@ -1,7 +1,12 @@
-(in-package #:aoc-2020)
+(defpackage #:aoc2020
+  (:use :cl :alexandria)
+  (:export #:do-input-lines
+           #:with-input
+           .
+           #.(aoc2020.utils:external-symbols :cl :alexandria)))
 
 (defvar *input-base*
-  (merge-pathnames "aoc/2020/inputs/*.txt" (user-homedir-pathname)))
+  (merge-pathnames "inputs/*.txt" (asdf:system-source-directory "aoc2020")))
 
 (defun input-file (name)
   (typecase name
@@ -20,4 +25,3 @@
              :while ,line
              :do (progn ,@body)
              :finally (return ,result)))))
-
