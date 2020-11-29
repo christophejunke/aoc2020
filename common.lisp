@@ -1,9 +1,11 @@
-(defpackage #:aoc2020
+(defpackage :aoc2020
   (:use :cl :alexandria)
   (:export #:do-input-lines
            #:with-input
            .
            #.(aoc2020.utils:external-symbols :cl :alexandria)))
+
+(in-package :aoc2020)
 
 (defvar *input-base*
   (merge-pathnames "inputs/*.txt" (asdf:system-source-directory "aoc2020")))
