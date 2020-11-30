@@ -3,6 +3,7 @@
   (:export #:fold-input-lines
            #:do-input-lines
            #:with-input
+           #:slurp-line
            #:int
            #:word
            #:letter
@@ -35,6 +36,10 @@
 (defun fold-input-lines (input function &optional accumulator)
   (do-input-lines (line input accumulator)
     (setf accumulator (funcall function line accumulator))))
+
+(defun slurp-line (input)
+  (with-input (s input)
+    (read-line s)))
 
 (define-parse-tree-synonym int
     (:register
