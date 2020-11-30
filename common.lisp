@@ -1,5 +1,5 @@
 (defpackage :aoc2020
-  (:use . #1=(:cl :alexandria :ppcre :optima))
+  (:use . #1=(:cl :alexandria :ppcre :trivia :named-readtables))
   (:export #:fold-input-lines
            #:do-input-lines
            #:with-input

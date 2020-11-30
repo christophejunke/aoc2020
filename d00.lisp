@@ -1,6 +1,11 @@
 (defpackage :aoc2020.00 (:use :aoc2020))
 (in-package :aoc2020.00)
 
+(in-readtable :fare-quasiquote)
+
+;; pattern matching
+(assert (= 6 (match '(1 2 3) (`(,a ,b ,c) (+ a b c)))))
+
 ;; testing basic input
 (do-input-lines (line "00-test")
   (assert (string= line "test")))
