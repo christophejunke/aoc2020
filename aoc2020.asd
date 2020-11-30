@@ -1,6 +1,7 @@
 (defsystem "aoc2020"
   :depends-on ("alexandria"
                "cl-ppcre"
+               "series"
                "trivia"
                "trivia.quasiquote")
   :serial t
