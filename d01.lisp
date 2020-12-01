@@ -45,7 +45,7 @@
            do (push (list i j) (gethash a h)))
      finally
        ;; Then one more iteration over the input vector to see for
-       ;; each Z if "2020 - Z" exists in the map. If so, and if all
+       ;; each Z if (- total z) exists in the map. If so, and if all
        ;; indices are different, then we have our solution.
        (loop
           for k below s
