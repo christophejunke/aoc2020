@@ -7,4 +7,5 @@
   :serial t
   :components ((:file "utils")
                (:file "common")
-               (:file "d00")))
+               (:file "d00")
+               (:file "d01")))
