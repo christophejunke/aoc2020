@@ -1,7 +1,8 @@
 (defpackage :aoc2020.01
   (:use :aoc2020)
   (:export #:part-1
-           #:part-2))
+           #:part-2
+           #:solve))
 
 (in-package :aoc2020.01)
 
