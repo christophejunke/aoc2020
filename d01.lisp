@@ -59,3 +59,16 @@
   (multiple-value-bind (vec i j k) (find-sum-3 2020 (input))
     (macrolet ((at (i) `(aref vec ,i)))
       (* (at i) (at j) (at k)))))
+
+;; Alternatively, using map-combinations
+
+(defun sum-n (n)
+  (map-combinations (lambda (vec)
+                      (when (= 2020 (reduce #'+ vec))
+                        (return-from sum-n (reduce #'* vec))))
+                    (input)
+                    :length n))
+
+(defun solve ()
+  (values (sum-n 2)
+          (sum-n 3)))
