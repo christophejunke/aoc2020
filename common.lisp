@@ -12,7 +12,8 @@
 
 (in-package :aoc2020)
 
-(rename-package :series "Z")
+(when-let ((package (find-package :series)))
+  (rename-package package "Z"))
 
 (defvar *input-base*
   (merge-pathnames "inputs/*.txt" (asdf:system-source-directory "aoc2020")))
