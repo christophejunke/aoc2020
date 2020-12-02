@@ -10,8 +10,11 @@ Twitter thread: https://twitter.com/chrsnjk/status/1332126685819449344
   another one)
 
 - Each day will be associated with a different branch (or tag, once it
-  needs not move anymore), i.e. `d01`, `d02`, etc., so that the diff
-  `dn..dn+1` shows the refactorings etc. necessary to get 
+  needs not move anymore), i.e. `d01`, `d02`, etc. as well as a tag
+  that identifies the starting point for each day, e.g. `d02.start`,
+  etc. Commits between a `dN` and the next `dN+1.start` are
+  refactorings, etc. Commits between `dN.start` and `dN` are all
+  associated to the puzzle for that day.
 
 - One package per day, named `aoc2020.dd` where `dd` is the day (e.g.
   01, 02, ..). Typically puzzles have two parts, so each package is
