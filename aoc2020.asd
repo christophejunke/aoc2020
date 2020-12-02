@@ -8,7 +8,7 @@
   :components ((:file "utils")
                (:file "common")
                (:module #:DAYS
-                :pathname ""
+                :pathname "days"
                 :serial nil
                 :components ((:file "d00")
                              (:file "d01")
