@@ -7,6 +7,12 @@
 (defun input-url (index)
   (format nil "https://adventofcode.com/2020/day/~d/input" index))
 
+;; Once logged with the browser, it is possible to get the
+;; necessary cookies (e.g. "Open as cURL", Network tab in
+;; Chrome). My cookie file looks like this:
+;;
+;; _ga=....; _gid=....; _gat=...; session=...
+
 (defvar *cookie-file*
   (merge-pathnames ".aoc-cookies" (user-homedir-pathname)))
 
@@ -19,8 +25,7 @@
     ("sec-fetch-mode" . "navigate")
     ("sec-fetch-user" . "?1")
     ("sec-fetch-dest" . "document")
-    ("cookie" . ,(with-open-file (i *cookie-file*)
-                   (read-line i)))))
+    ("cookie" . ,(with-open-file (i *cookie-file*) (read-line i)))))
 
 (defun aoc-input-stream (day-number)
   (http-request (input-url day-number)
@@ -33,7 +38,9 @@
                                   :directory '(:relative "inputs"))
                    (asdf:system-source-directory :aoc2020)))
 
-;; do not call too often
+;;
+;; Use responsibly, do not call too often
+;;
 (defun fetch-for-day (day)
   (let ((day-pathname (input-pathname day)))
     (prog1 day-pathname
