@@ -7,8 +7,12 @@
 (in-package :aoc2020.02)
 
 (defun parse-entry (line)
-      ('(:sequence int "-" int " " letter ": " word) line :sharedp t)
   (register-groups-bind ((#'parse-integer v1 v2) (#'first-elt letter) password)
+      (;; like "static" in C, compute the scanner only once, at load-time
+       (load-time-value (let ((*use-bmh-matchers* t))
+                          (create-scanner
+                           '(:sequence int "-" int " " letter ": " word))))
+       line :sharedp t)
     (values v1 v2 letter password)))
 
 ;; functional
