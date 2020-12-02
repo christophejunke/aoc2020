@@ -9,11 +9,8 @@
   (char string 0))
 
 (defun parse-entry (line)
-  (register-groups-bind ((#'parse-integer v1 v2)
-                         (#'first-char letter)
-                         password)
-      ('(:sequence int #\- int #\space letter #\: #\space word)
-        line)
+  (register-groups-bind ((#'parse-integer v1 v2) (#'first-char letter) password)
+      ('(:sequence int "-" int " " letter ": " word) line :sharedp t)
     (values v1 v2 letter password)))
 
 (defun part-1 ()
