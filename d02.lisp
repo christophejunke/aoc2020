@@ -6,12 +6,9 @@
 
 (in-package :aoc2020.02)
 
-(defun first-char (string)
-  (char string 0))
-
 (defun parse-entry (line)
-  (register-groups-bind ((#'parse-integer v1 v2) (#'first-char letter) password)
       ('(:sequence int "-" int " " letter ": " word) line :sharedp t)
+  (register-groups-bind ((#'parse-integer v1 v2) (#'first-elt letter) password)
     (values v1 v2 letter password)))
 
 ;; functional
