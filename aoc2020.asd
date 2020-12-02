@@ -1,13 +1,17 @@
 (defsystem "aoc2020"
   :depends-on ("alexandria"
                "cl-ppcre"
+               "drakma"
                "series"
                "trivia"
-               "trivia.quasiquote")
-  :serial t
+               "trivia.quasiquote"
+               "uiop")
+  :serial nil
   :components ((:file "utils")
-               (:file "common")
+               (:file "fetch")
+               (:file "common" :depends-on ("utils" "fetch"))
                (:module #:DAYS
+                :depends-on ("common")
                 :pathname "days"
                 :serial nil
                 :components ((:file "d00")
