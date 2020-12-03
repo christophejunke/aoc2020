@@ -12,7 +12,7 @@
                  (when (eq package (symbol-package s))
                    (return t)))
          do (format *trace-output*
-                    "~&~2,'0d ~:[✓~;× ~:*~a~]~%"
+                    "~&~2,'0d ~:[ok~;fail ~:*~a~]~%"
                     day
                     (when-let* ((s (find-symbol "TEST" package))
                                 (f (symbol-function s)))
