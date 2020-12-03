@@ -27,5 +27,14 @@
 (defun part-1 ()
   (count-trees *input-grid* 3 1))
 
+(defun part-2 ()
+  (loop
+     :with grid = *input-grid*
+     :for (dx dy) :in '((1 1) (3 1) (5 1) (7 1) (1 2))
+     :for count = (count-trees grid dx dy)
+     :for total = count :then (* total count)
+     :finally (return total)))
+
 (defun test ()
-  (assert (= (part-1) 276)))
+  (assert (= (part-1) 276))
+  (assert (= (part-2) 7812180000)))
