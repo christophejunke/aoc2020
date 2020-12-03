@@ -15,11 +15,17 @@
                  line)
             rows))))
 
-(defun part-1 (&optional (grid *input-grid*))
+(defun count-trees (grid dx dy)
   (destructuring-bind (height width) (array-dimensions *input-grid*)
-    (do ((y 0 (+ y 1))
-         (x 0 (mod (+ x 3) width))
+    (do ((y 0 (+ y dy))
+         (x 0 (mod (+ x dx) width))
          (s 0))
-        ((= y height) s)
+        ((>= y height) s)
       (when (aref grid y x)
         (incf s)))))
+
+(defun part-1 ()
+  (count-trees *input-grid* 3 1))
+
+(defun test ()
+  (assert (= (part-1) 276)))
