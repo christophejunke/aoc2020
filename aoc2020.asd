@@ -9,11 +9,14 @@
   :serial nil
   :components ((:file "utils")
                (:file "fetch")
-               (:file "common" :depends-on ("utils" "fetch"))
-               (:file "scanner" :depends-on ("common"))
+               (:file "package")
+               (:file "setup" :depends-on ("utils" "fetch" "package"))
+               (:file "inputs" :depends-on ("setup"))
+               (:file "lexer" :depends-on ("setup"))
+               (:file "scanner" :depends-on ("lexer"))
                (:file "tests" :depends-on ("scanner"))
                (:module #:DAYS
-                :depends-on ("common")
+                :depends-on ("tests")
                 :pathname "days"
                 :serial nil
                 :components ((:file "d00")
