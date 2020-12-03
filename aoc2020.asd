@@ -15,6 +15,7 @@
                (:file "lexer" :depends-on ("setup"))
                (:file "scanner" :depends-on ("lexer"))
                (:file "tests" :depends-on ("scanner"))
+               (:file "grids" :depends-on ("package"))
                (:module #:DAYS
                 :depends-on ("tests")
                 :pathname "days"

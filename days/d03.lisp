@@ -3,17 +3,11 @@
 
 (in-package :aoc2020.03)
 
-(defvar *input-grid*
-  (let (rows width (height 0))
-    (do-input-lines (line 3 (make-array (list height width)
-                                        :element-type 'boolean
-                                        :initial-contents (nreverse rows)))
-      (unless width (setf width (length line)))
-      (incf height)
-      (push (map 'list
-                 (lambda (c) (ecase c (#\# t) (#\. nil)))
-                 line)
-            rows))))
+(defun input-grid ()
+  (with-input (stream 3)
+    (read-grid stream
+               :element-type 'boolean
+               :transform (lambda (c) (char= c #\#)))))
 
 (defun count-trees (grid dx dy)
   (destructuring-bind (height width) (array-dimensions grid)
@@ -24,17 +18,16 @@
       (when (aref grid y x)
         (incf s)))))
 
-(defun part-1 ()
-  (count-trees *input-grid* 3 1))
+(defun part-1 (&optional (grid (input-grid)))
+  (count-trees grid 3 1))
 
-(defun part-2 ()
+(defun part-2 (&optional (grid (input-grid)))
   (loop
-     :with grid = *input-grid*
      :for (dx dy) :in '((1 1) (3 1) (5 1) (7 1) (1 2))
      :for count = (count-trees grid dx dy)
      :for total = count :then (* total count)
      :finally (return total)))
 
-(defun test ()
-  (assert (= (part-1) 276))
-  (assert (= (part-2) 7812180000)))
+(defun test (&optional (grid (input-grid)))
+  (assert (= (part-1 grid) 276))
+  (assert (= (part-2 grid) 7812180000)))

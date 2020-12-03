@@ -10,6 +10,7 @@
            #:letter
            #:decode-format
            #:scanner-bind
+           #:read-grid
            #:test-all
            .
            #.(aoc2020.utils:external-symbols . #1#)))
