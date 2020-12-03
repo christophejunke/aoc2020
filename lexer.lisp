@@ -6,6 +6,12 @@
       (:greedy-repetition 0 1 (:char-class #\- #\+))
       (:greedy-repetition 1 nil :digit-class))))
 
+(defun %int (d)
+  `(:register
+    (:sequence
+     (:greedy-repetition ,d ,d :digit-class))))
+
+
 (define-parse-tree-synonym letter
     (:register :word-char-class))
 
@@ -23,6 +29,7 @@
                             :fill-pointer 0
                             :element-type 'character
                             :adjustable t))
+        (length-param 0)
         (state-fn #'values)
         (buffer-copy (if sharedp #'identity #'copy-seq)))
     (declare (type function state-fn)
@@ -36,6 +43,7 @@
              (switch-to (s)
                (setf state-fn s))
              (clear ()
+               (setf length-param 0)
                (setf (fill-pointer buffer) 0))
              (buffer (c)
                (vector-push-extend c buffer (array-total-size buffer)))
@@ -43,24 +51,38 @@
                (apply callback token-type components))
              (finish-literal-token ()
                (when (> (length buffer) 0)
-                 (emit :literal (funcall buffer-copy buffer))
-                 (clear))))
+                 (emit :literal (funcall buffer-copy buffer)))
+               (clear)))
       ;; fsm state functions
       (labels ((dispatch (c)
                  (case c
                    (#\%
-                    (switch-to #'await-type))
+                    (switch-to #'maybe-escape))
                    (t (buffer c))))
+               (maybe-escape (c)
+                 (case c
+                   (#\% (buffer c)
+                        (switch-to #'dispatch))
+                   (t (finish-literal-token)
+                      (switch-to #'await-type)
+                      (feed-fsm c))))
+               (await-length-param (c)
+                 (if-let (d (digit-char-p c))
+                   (setf length-param (+ (* length-param 10) d))
+                   (await-type c)))
                (await-type (c)
-                 (flet ((emit (tok) (finish-literal-token) (emit tok)))
+                 (flet ((emit/dispatch (&rest token)
+                          (apply #'emit token)
+                          (switch-to #'dispatch)))
                    (case c
-                     ((#\i #\d) (emit :integer))
-                     (#\c (emit :character))
-                     (#\s (emit :word))
-                     ;; escape %% as %
-                     (#\% (buffer c))
-                     (t (error "unexpected %~a sequence" c))))
-                 (switch-to #'dispatch)))
+                     ((#\i #\d) (emit/dispatch :integer length-param))
+                     (#\c (emit/dispatch :character))
+                     (#\s (emit/dispatch :word))
+                     (t (cond
+                          ((digit-char-p c)
+                           (switch-to #'await-length-param)
+                           (feed-fsm c))
+                          (t (error "unexpected %~a sequence" c))))))))
         ;; lexer
         (loop
            :initially (switch-to #'dispatch)
@@ -71,7 +93,10 @@
 
 (defun as-regex-node (token)
   (ematch token
-    ((list :integer)        (values 'int    'parse-integer))
+    ((list :integer d)
+     (if (= d 0)
+         (values 'int 'parse-integer)
+         (values (%int d) `(lambda (s) (parse-integer s :end ,d)))))
     ((list :character)      (values 'letter 'first-elt))
     ((list :word)           (values 'word   'identity))
     ((list :literal string) string)))
