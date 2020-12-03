@@ -55,7 +55,7 @@
 
 (defparameter *next-fetch-time* nil)
 
-(defparameter *fetch-limit* (duration :minute 1))
+(defparameter *fetch-limit* (duration :minute 15))
 
 (defun check-fetch-time (now)
   (or (null *next-fetch-time*)
