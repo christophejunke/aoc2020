@@ -6,17 +6,15 @@
 (defun input-grid ()
   (with-input (stream 3)
     (read-grid stream
-               :element-type 'boolean
-               :transform (lambda (c) (char= c #\#)))))
+               :element-type 'bit
+               :transform (lambda (c) (position c ".#")))))
 
 (defun count-trees (grid dx dy)
   (destructuring-bind (height width) (array-dimensions grid)
     (do ((y 0 (+ y dy))
          (x 0 (mod (+ x dx) width))
-         (s 0))
-        ((>= y height) s)
-      (when (aref grid y x)
-        (incf s)))))
+         (s 0 (+ s (aref grid y x))))
+        ((>= y height) s))))
 
 (defun part-1 (&optional (grid (input-grid)))
   (count-trees grid 3 1))
