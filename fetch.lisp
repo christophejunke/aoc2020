@@ -1,5 +1,12 @@
 (defpackage :aoc2020.fetch
   (:use :cl :drakma)
+  (:import-from #:local-time-duration
+                local-time-duration:duration
+                local-time-duration:timestamp-duration+)
+  (:import-from #:local-time
+                local-time:timestamp>=
+                local-time:now
+                local-time:timestamp-difference)
   (:export #:fetch-input))
 
 (in-package :aoc2020.fetch)
@@ -48,27 +55,30 @@
 
 (defparameter *next-fetch-time* nil)
 
-(defparameter *fetch-limit*
-  (local-time-duration:duration :minute 1))
+(defparameter *fetch-limit* (duration :minute 1))
 
-(defun allow-fetch-p (&aux (now (local-time:now)))
-  (and (or (null *next-fetch-time*)
-           (local-time:timestamp>= now *next-fetch-time*))
-       (setf *next-fetch-time*
-             (local-time-duration:timestamp-duration+ now
-                                                      *fetch-limit*))))
+(defun check-fetch-time (now)
+  (or (null *next-fetch-time*)
+      (timestamp>= now *next-fetch-time*)
+      (error "Next fetch allowed in ~a seconds"
+             (ceiling
+              (timestamp-difference *next-fetch-time* now)))))
+
+(defun check-update-fetch-time (now)
+  (when (check-fetch-time now)
+    (setf *next-fetch-time* (timestamp-duration+ now *fetch-limit*))))
+
+(defun check-if-file-exists/warn (path warnp)
+  (when (probe-file path)
+    (prog1 path
+      (when warnp
+        (warn "File already exists: ~a" path)))))
 
 (defun fetch-input (day &optional (warnp t))
-  (let ((day-pathname (input-pathname day)))
-    (prog1 day-pathname
-      (if (probe-file day-pathname)
-          (when warnp
-            (warn "File already exists: ~a" day-pathname))
-          (if (allow-fetch-p)
-              (with-open-file (out day-pathname :direction :output)
-                (with-open-stream (in (aoc-input-stream day))
-                  (uiop:copy-stream-to-stream in out)))
-              (error "Next fetch allowed in ~a seconds"
-                     (ceiling
-                      (local-time:timestamp-difference *next-fetch-time*
-                                                       (local-time:now)))))))))
+  (let ((path (input-pathname day)))
+    (prog1 path
+      (unless (check-if-file-exists/warn path warnp)
+        (when (check-update-fetch-time (now))
+          (with-open-stream (i (aoc-input-stream day))
+            (with-open-file (o path :direction :output)
+              (uiop:copy-stream-to-stream i o))))))))
