@@ -7,7 +7,7 @@
   (with-input (stream 3)
     (read-grid stream
                :element-type 'bit
-               :transform (lambda (c) (position c ".#")))))
+               :transform (rcurry 'position ".#"))))
 
 (defun count-trees (grid dx dy)
   (destructuring-bind (height width) (array-dimensions grid)
