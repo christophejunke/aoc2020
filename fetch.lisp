@@ -52,11 +52,11 @@
   (local-time-duration:duration :minute 1))
 
 (defun allow-fetch-p (&aux (now (local-time:now)))
-  (or (null *next-fetch-time*)
-      (and (local-time:timestamp>= now *next-fetch-time*)
-           (setf *next-fetch-time*
-                 (local-time-duration:timestamp-duration+ now
-                                                          *fetch-limit*)))))
+  (and (or (null *next-fetch-time*)
+           (local-time:timestamp>= now *next-fetch-time*))
+       (setf *next-fetch-time*
+             (local-time-duration:timestamp-duration+ now
+                                                      *fetch-limit*))))
 
 (defun fetch-input (day &optional (warnp t))
   (let ((day-pathname (input-pathname day)))
@@ -68,4 +68,7 @@
               (with-open-file (out day-pathname :direction :output)
                 (with-open-stream (in (aoc-input-stream day))
                   (uiop:copy-stream-to-stream in out)))
-              (error "Next fetch allowed: ~a" *next-fetch-time*))))))
+              (error "Next fetch allowed in ~a seconds"
+                     (ceiling
+                      (local-time:timestamp-difference *next-fetch-time*
+                                                       (local-time:now)))))))))
