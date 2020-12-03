@@ -59,10 +59,9 @@
 
 (defun check-fetch-time (now)
   (or (null *next-fetch-time*)
-      (timestamp>= now *next-fetch-time*)
-      (error "Next fetch allowed in ~a seconds"
-             (ceiling
-              (timestamp-difference *next-fetch-time* now)))))
+      (let ((dt (timestamp-difference *next-fetch-time* now)))
+        (or (>= dt 0)
+            (error "Next fetch allowed in ~a seconds" (ceiling dt))))))
 
 (defun check-update-fetch-time (now)
   (when (check-fetch-time now)
