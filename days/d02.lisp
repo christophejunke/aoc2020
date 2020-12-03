@@ -2,17 +2,13 @@
   (:use :aoc2020)
   (:export #:part-1
            #:part-2
-           #:solve))
+           #:solve
+           #:test))
 
 (in-package :aoc2020.02)
 
 (defun parse-entry (line)
-  (register-groups-bind ((#'parse-integer v1 v2) (#'first-elt letter) password)
-      (;; like "static" in C, compute the scanner only once, at load-time
-       (load-time-value (let ((*use-bmh-matchers* t))
-                          (create-scanner
-                           '(:sequence int "-" int " " letter ": " word))))
-       line :sharedp t)
+  (scanner-bind ("%d-%d %c: %s" v1 v2 letter password) line
     (values v1 v2 letter password)))
 
 ;; functional
@@ -57,3 +53,8 @@
                                   (at c p v2)))))))
        ;; scan lines from the stream
        (z:scan-stream stream #'read-line)))))
+
+(defun test ()
+  (multiple-value-bind (p1 p2) (solve)
+    (assert (= p1 422))
+    (assert (= p2 451))))

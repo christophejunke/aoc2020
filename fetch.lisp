@@ -41,6 +41,7 @@
 ;;
 ;; Use responsibly, do not call too often
 ;;
+
 (defun fetch-for-day (day)
   (let ((day-pathname (input-pathname day)))
     (prog1 day-pathname
