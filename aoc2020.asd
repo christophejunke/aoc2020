@@ -2,6 +2,8 @@
   :depends-on ("alexandria"
                "cl-ppcre"
                "drakma"
+               "local-time"
+               "local-time-duration"
                "series"
                "trivia"
                "trivia.quasiquote"
@@ -17,7 +19,7 @@
                (:file "tests" :depends-on ("scanner"))
                (:file "grids" :depends-on ("package"))
                (:module #:DAYS
-                :depends-on ("tests")
+                :depends-on ("tests" "inputs")
                 :pathname "days"
                 :serial nil
                 :components ((:file "d00")

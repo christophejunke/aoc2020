@@ -1,16 +1,7 @@
 (in-package :aoc2020)
 
-(defvar *input-base*
-  (merge-pathnames "inputs/*.txt" (asdf:system-source-directory "aoc2020")))
-
-(defun input-file (name)
-  (typecase name
-    (number (input-file (format nil "~2,'0d" name)))
-    (string (input-file (make-pathname :name name)))
-    (pathname (merge-pathnames name *input-base*))))
-
 (defmacro with-input ((stream name) &body body)
-  `(with-open-file (,stream (input-file ,name))
+  `(with-open-file (,stream (aoc2020.fetch:fetch-input ,name nil))
      ,@body))
 
 (defmacro do-input-lines ((line name &optional result) &body body)

@@ -1,6 +1,6 @@
 (defpackage :aoc2020.fetch
   (:use :cl :drakma)
-  (:export #:fetch-for-day))
+  (:export #:fetch-input))
 
 (in-package :aoc2020.fetch)
 
@@ -32,21 +32,40 @@
                 :additional-headers *headers*
                 :want-stream t))
 
-(defun input-pathname (day)
-  (merge-pathnames (make-pathname :name (format nil "~2,'0d" day)
-                                  :type "txt"
-                                  :directory '(:relative "inputs"))
-                   (asdf:system-source-directory :aoc2020)))
+(defvar *input-base*
+  (merge-pathnames "inputs/*.txt"
+                   (asdf:system-source-directory "aoc2020")))
+
+(defun input-pathname (in)
+  (typecase in
+    (number (input-pathname (format nil "~2,'0d" in)))
+    (string (input-pathname (make-pathname :name in)))
+    (pathname (merge-pathnames in *input-base*))))
 
 ;;
 ;; Use responsibly, do not call too often
 ;;
 
-(defun fetch-for-day (day)
+(defparameter *next-fetch-time* nil)
+
+(defparameter *fetch-limit*
+  (local-time-duration:duration :minute 1))
+
+(defun allow-fetch-p (&aux (now (local-time:now)))
+  (or (null *next-fetch-time*)
+      (and (local-time:timestamp>= now *next-fetch-time*)
+           (setf *next-fetch-time*
+                 (local-time-duration:timestamp-duration+ now
+                                                          *fetch-limit*)))))
+
+(defun fetch-input (day &optional (warnp t))
   (let ((day-pathname (input-pathname day)))
     (prog1 day-pathname
       (if (probe-file day-pathname)
-          (warn "File already exists")
-          (with-open-file (out day-pathname :direction :output)
-            (with-open-stream (in (aoc-input-stream day))
-              (uiop:copy-stream-to-stream in out)))))))
+          (when warnp
+            (warn "File already exists: ~a" day-pathname))
+          (if (allow-fetch-p)
+              (with-open-file (out day-pathname :direction :output)
+                (with-open-stream (in (aoc-input-stream day))
+                  (uiop:copy-stream-to-stream in out)))
+              (error "Next fetch allowed: ~a" *next-fetch-time*))))))
