@@ -33,9 +33,12 @@ Twitter thread: https://twitter.com/chrsnjk/status/1332126685819449344
 
 # Install
 
+Install [quicklisp](https://www.quicklisp.org/beta/).
+
 Clone the repository in `~/quicklisp/local-projects/` and call
 `(ql:quickload :aoc2020)`.
 
 In the source directory, calling `make` will test loading the code
-with `sbcl`, which is useful to guard against discrepancies between
-the source code and the changes made in the live environment.
+with `sbcl` and running tests, which is useful to guard against
+discrepancies between the source code and the changes made in the live
+environment.
