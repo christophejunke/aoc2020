@@ -71,10 +71,10 @@
 
 (defun as-regex-node (token)
   (ematch token
-    ((list :integer) (values 'int 'parse-integer))
-    ((list :character) (values 'letter 'first-elt))
-    ((list :word) (values 'word 'identity))
-    ((list :literal string) (copy-seq string))))
+    ((list :integer)        (values 'int    'parse-integer))
+    ((list :character)      (values 'letter 'first-elt))
+    ((list :word)           (values 'word   'identity))
+    ((list :literal string) string)))
 
 (defun decode-format (format)
   (let (regex-tree decoders)
@@ -85,7 +85,6 @@
                       (push node regex-tree)
                       (when decoder
                         (push decoder decoders))))
-                  stream
-                  :sharedp t))
+                  stream))
     (values `(:sequence ,@(nreverse regex-tree))
             (nreverse decoders))))
