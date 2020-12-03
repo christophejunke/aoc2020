@@ -10,6 +10,7 @@
            #:letter
            #:decode-format
            #:scanner-bind
+           #:scan-as-values
            #:read-grid
            #:test-all
            .

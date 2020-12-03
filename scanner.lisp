@@ -3,18 +3,27 @@
 ;; for simplicity this relies on a regex but this kind of format could
 ;; be implemented differently.
 
-(defmacro scanner-bind ((format &rest variables) input &body body)
-  (check-type format string)
-  (multiple-value-bind (tree decoders) (decode-format format)
+(defun %scanner-body (safe variables decoders body format tree input)
+  (unless safe
     (assert (= (length variables) (length decoders))
             (variables)
             "Invalid number of variables ~a for given format ~s"
-            variables format)
-    `(register-groups-bind ,(mapcar (lambda (d v) `((function ,d) ,v))
-                                    decoders
-                                    variables)
-         ((let ((*use-bmh-matchers* t))
-            (load-time-value (create-scanner ',tree)))
-          ,input
-          :sharedp t)
-       ,@body)))
+            variables format))
+  (flet ((bind (decoder variable) `((function ,decoder) ,variable)))
+    (let ((pairs (mapcar #'bind decoders variables)))
+      `(register-groups-bind ,pairs ((let ((*use-bmh-matchers* t))
+                                       (load-time-value
+                                        (create-scanner ',tree)))
+                                     ,input
+                                     :sharedp t)
+         ,@body))))
+
+(defmacro scanner-bind ((format &rest variables) input &body body)
+  (multiple-value-bind (tree decoders) (decode-format format)
+    (%scanner-body nil variables decoders body format tree input)))
+
+(defmacro scan-as-values (format input)
+  (multiple-value-bind (tree decoders) (decode-format format)
+    (let* ((variables (loop for _ in decoders collect (gensym)))
+           (body `((values ,@variables))))
+      (%scanner-body t variables decoders body format tree input))))

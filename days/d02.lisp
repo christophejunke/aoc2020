@@ -8,8 +8,7 @@
 (in-package :aoc2020.02)
 
 (defun parse-entry (line)
-  (scanner-bind ("%d-%d %c: %s" v1 v2 letter password) line
-    (values v1 v2 letter password)))
+  (scan-as-values "%d-%d %c: %s" line))
 
 ;; functional
 
