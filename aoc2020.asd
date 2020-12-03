@@ -10,6 +10,8 @@
   :components ((:file "utils")
                (:file "fetch")
                (:file "common" :depends-on ("utils" "fetch"))
+               (:file "scanner" :depends-on ("common"))
+               (:file "tests" :depends-on ("scanner"))
                (:module #:DAYS
                 :depends-on ("common")
                 :pathname "days"
