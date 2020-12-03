@@ -16,7 +16,7 @@
             rows))))
 
 (defun count-trees (grid dx dy)
-  (destructuring-bind (height width) (array-dimensions *input-grid*)
+  (destructuring-bind (height width) (array-dimensions grid)
     (do ((y 0 (+ y dy))
          (x 0 (mod (+ x dx) width))
          (s 0))
