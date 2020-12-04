@@ -1,14 +1,13 @@
-(defpackage :aoc2020.04.fields
-  (:documentation "Expected symbols for fields in a record.")
-  (:use)
-  (:export #:byr
-           #:iyr
-           #:eyr
-           #:hgt
-           #:hcl
-           #:ecl
-           #:pid
-           #:cid))
+(aoc2020.utils:defpackage/enum :aoc2020.04.fields
+  "Expected symbols for fields in a record."
+  (#:BYR "Birth Year")
+  (#:IYR "Issue Year")
+  (#:EYR "Expiration Year")
+  (#:HGT "Height")
+  (#:HCL "Hair Color")
+  (#:ECL "Eye Color")
+  (#:PID "Passport ID")
+  (#:CID "Country ID"))
 
 (defpackage :aoc2020.04
   (:use :aoc2020 :aoc2020.04.fields)
