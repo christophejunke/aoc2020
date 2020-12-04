@@ -16,13 +16,19 @@
 
 (in-package :aoc2020.04)
 
-(let ((hash (make-hash-table :test #'equal)))
-  (do-external-symbols (s :aoc2020.04.fields)
-    (setf (gethash (string-downcase (string s)) hash) s))
-  (defun field (name)
-    "Find field symbol from NAME."
-    (or (gethash name hash)
-        (error "Unexpected field ~s" name))))
+(defun field (s)
+  "Find field symbol from NAME."
+  (case (char s 0)
+    (#\b 'byr)
+    (#\c 'cid)
+    (#\i 'iyr)
+    (#\p 'pid)
+    (#\e (case (char s 1)
+           (#\y 'eyr)
+           (t 'ecl)))
+    (#\h (case (char s 1)
+           (#\c 'hcl)
+           (t 'hgt)))))
 
 (defun map-line-chunks (function &aux stack)
   "Read consecutive non-empty lines and call FUNCTION on their concatenation."
@@ -109,10 +115,10 @@
    missing field."
   (check-type fun-name symbol)
   (check-type val-name symbol)
-  (with-gensyms (key hash-table)
+  (with-gensyms (key jump-table)
     (let (initforms)
       (flet ((add-initform (field expressions)
-               (push `(setf (gethash ',field ,hash-table)
+               (push `(setf (aref ,jump-table ,(symbol-value field))
                             (compile nil
                                      (lambda (,val-name)
                                        (declare (ignorable ,val-name))
@@ -122,10 +128,12 @@
           (if-let (clauses (remove field body :test-not #'string= :key #'car))
             (add-initform field (map-into clauses #'second clauses))
             (warn "No rule for field ~s" field))))
-      `(let ((,hash-table (make-hash-table)))
+      `(let ((,jump-table (make-array ,(length (aoc2020.utils:external-symbols :aoc2020.04.fields))
+                                      :element-type 'function
+                                      :initial-element #'values)))
          ,@initforms
          (defun ,fun-name (,key ,val-name)
-           (funcall (gethash ,key ,hash-table) ,val-name))))))
+           (funcall (aref ,jump-table (symbol-value ,key)) ,val-name))))))
 
 (define-validator part-1/validp (v)
   ;; all fields are mandatory (v is not null), except CID
