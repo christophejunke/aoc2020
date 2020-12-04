@@ -1,7 +1,8 @@
 (in-package :aoc2020)
 
 (defmacro with-input ((stream name) &body body)
-  `(with-open-file (,stream (aoc2020.fetch:fetch-input ,name nil))
+  `(with-open-file (,stream (aoc2020.fetch:fetch-input ,name nil)
+                            :element-type 'base-char)
      ,@body))
 
 (defmacro do-input-lines ((line name &optional result) &body body)

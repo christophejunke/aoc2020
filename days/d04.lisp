@@ -16,42 +16,63 @@
 
 (in-package :aoc2020.04)
 
-(defun field (name)
-  "Find field symbol from NAME."
-  (or (find-symbol (string-upcase name) :aoc2020.04.fields)
-      (error "Unexpected field ~s" name)))
+(let ((hash (make-hash-table :test #'equal)))
+  (do-external-symbols (s :aoc2020.04.fields)
+    (setf (gethash (string-downcase (string s)) hash) s))
+  (defun field (name)
+    "Find field symbol from NAME."
+    (or (gethash name hash)
+        (error "Unexpected field ~s" name))))
 
 (defun map-line-chunks (function &aux stack)
   "Read consecutive non-empty lines and call FUNCTION on their concatenation."
   (flet ((emit ()
            (when stack
              (let ((lines (nreverse (shiftf stack nil))))
-               (funcall function (format nil "~{~a~^ ~}" lines))))))
+               (funcall function lines)))))
     (do-input-lines (line 4 (emit))
       (if (string= line "")
           (emit)
           (push line stack)))))
 
-;; /!\ returning an ALIST without doing further checks means we trust the
-;; input to not have duplicate fields. We could also optimize so that it does
-;; not search this list for each field.
+(defun map-fields (function line)
+  (declare (type (simple-array character (*)) line)
+           (type function function)
+           (optimize (speed 3)))
+  (loop
+    :for start = 0 :then (1+ find)
+    :for find = (position #\space line :start start)
+    :for end = (or find (length line))
+    :for colon = (position #\: line :start start)
+    :do
+       (assert (<= start colon end) ())
+       (funcall function
+                (field (subseq line start colon))
+                (subseq line (1+ colon) end))
+    :while find))
 
 (defun map-records (function)
   "Call FUNCTION with a (FIELD . VALUE) association list for all records."
-  (map-line-chunks
-   (lambda (line)
-     (funcall function
-              (loop
-                :for field :in (split #\space line :sharedp t)
-                :for (name value) := (split #\: field :sharedp t)
-                :collect (cons (field name) value))))))
+  (let ((record (make-array 8
+                            :element-type '(or null string)
+                            :initial-element nil)))
+    (declare (dynamic-extent record))
+    (map-line-chunks
+     (lambda (lines)
+       (dolist (line lines)
+         (map-fields (lambda (field value)
+                       (setf (aref record (symbol-value field)) value))
+                     line))
+       (funcall function record)
+       (fill record nil)))))
 
 (defun validate-all-fields-if (test record)
   "Check that for each expected FIELD, (FUNCALL TEST FIELD VALUE) is true.
    VALUE is the associated value for FIELD in RECORD, and may be NIL."
   (do-external-symbols (field :aoc2020.04.fields t)
-    (unless (funcall test field (cdr (assoc field record)))
-      (return nil))))
+    (let ((index (symbol-value field)))
+      (unless (funcall test field (aref record index))
+        (return nil)))))
 
 (declaim (inline year<= valid-height-p))
 
@@ -138,3 +159,4 @@
   (multiple-value-bind (p1 p2) (solve)
     (assert (= p1 196))
     (assert (= p2 114))))
+
