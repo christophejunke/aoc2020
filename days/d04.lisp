@@ -43,11 +43,6 @@
                 :for (name value) := (split #\: field :sharedp t)
                 :collect (cons (field name) value))))))
 
-(defun count-records-if (test &aux (counter 0))
-  "Count records that match TEST"
-  (map-records (lambda (u) (when (funcall test u) (incf counter))))
-  counter)
-
 (defun validate-all-fields-if (test record)
   "Check that for each expected FIELD, (FUNCALL TEST FIELD VALUE) is true.
    VALUE is the associated value for FIELD in RECORD, and may be NIL."
