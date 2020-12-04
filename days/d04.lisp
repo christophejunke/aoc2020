@@ -15,7 +15,6 @@
 
 (defpackage aoc2020.04.fields
   (:use)
-  (:nicknames d04.f)
   (:export #:byr
            #:iyr
            #:eyr
@@ -25,17 +24,16 @@
            #:pid
            #:cid))
 
-(defun map-records (function)
+(defun map-records (fn)
   (map-chunks
    (lambda (line)
-     (funcall
-      function
-      (loop
-         :for field :in (split #\space line :sharedp t)
-         :for (name value) := (split #\: field :sharedp t)
-         :collect (cons (find-symbol (string-upcase name)
-                                     :aoc2020.04.fields)
-                        value))))))
+     (funcall fn
+              (loop
+                :for field :in (split #\space line :sharedp t)
+                :for (name value) := (split #\: field :sharedp t)
+                :collect (cons (find-symbol (string-upcase name)
+                                            :aoc2020.04.fields)
+                               value))))))
 
 (defun count-records-if (test &aux (counter 0))
   (map-records (lambda (record)
@@ -48,60 +46,48 @@
     (unless (funcall test field (cdr (assoc field record)))
       (return nil))))
 
-(defun solve-part (validator)
+(defun solve-part (validation-test)
   (count-records-if
    (lambda (record)
-     (validate-all-fields-if validator record))))
+     (validate-all-fields-if validation-test record))))
 
 (defun part-1 ()
   (solve-part
-   (lambda (k v)
-     (case k
+   (lambda (key value)
+     (case key
+       ;; cid is always valid, even if not present
        (aoc2020.04.fields:cid t)
-       (t v)))))
+       ;; other fields are mandatory
+       (t value)))))
 
-(defun yearp (s min max)
-  (when s
-    (and (= 4 (length s)) (<= min (parse-integer s) max))))
+(defun yearp (string min max)
+  (and string
+       (= 4 (length string))
+       (<= min (parse-integer string) max)))
 
-(defun heightp (s)
-  (when s
-    (multiple-value-bind (height end) (parse-integer s :junk-allowed t)
+(defun heightp (string)
+  (when string
+    (multiple-value-bind (height end) (parse-integer string :junk-allowed t)
       (when height
-        (let ((unit (subseq s end)))
+        (flet ((unitp (u) (string= string u :start1 end)))
           (cond
-            ((string= unit "in") (<= 59 height 76))
-            ((string= unit "cm") (<= 150 height 193))))))))
-
-(defun eclp (v)
-  (when v
-    (scan '(:sequence
-            :start-anchor
-            (:alternation
-             "amb" "blu" "brn"
-             "gry" "grn" "hzl" "oth")
-            :end-anchor)
-          v)))
-
-(defun pidp (v)
-  (when v
-    (scan '(:sequence :start-anchor
-            (:greedy-repetition 9 9 :digit-class)
-            :end-anchor)
-          v)))
+            ((unitp "in") (<=  59 height  76))
+            ((unitp "cm") (<= 150 height 193))))))))
 
 (defun part-2 ()
   (solve-part
    (lambda (k v)
-     (case k
-       (d04.f:byr (yearp v 1920 2002))
-       (d04.f:iyr (yearp v 2010 2020))
-       (d04.f:eyr (yearp v 2020 2030))
-       (d04.f:hgt (heightp v))
-       (d04.f:hcl (and v (scan "^#[0-9a-f]{6,6}$" v)))
-       (d04.f:ecl (eclp v))
-       (d04.f:pid (pidp v))
-       (d04.f:cid t)))))
+     (macrolet ((rgxp (r) `(and v (scan ,r v)))
+                (year (min max) `(yearp v ,min ,max)))
+       (case k
+         (aoc2020.04.fields:byr (year 1920 2002))
+         (aoc2020.04.fields:iyr (year 2010 2020))
+         (aoc2020.04.fields:eyr (year 2020 2030))
+         (aoc2020.04.fields:hgt (heightp v))
+         (aoc2020.04.fields:hcl (rgxp "^#[0-9a-f]{6}$"))
+         (aoc2020.04.fields:ecl (rgxp "^(?:amb|blu|brn|gry|grn|hzl|oth)$"))
+         (aoc2020.04.fields:pid (rgxp "^\\d{9}$"))
+         (aoc2020.04.fields:cid t))))))
 
 (defun test ()
   (assert (= 196 (part-1)))
