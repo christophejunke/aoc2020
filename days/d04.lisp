@@ -16,17 +16,21 @@
 
 (in-package :aoc2020.04)
 
-(defun field (s)
+(define-constant +fields-count+
+    (length (aoc2020.utils:external-symbols
+             :aoc2020.04.fields)))
+
+(defun field (s i)
   "Find field symbol from NAME."
-  (case (char s 0)
+  (case (char s i)
     (#\b 'byr)
     (#\c 'cid)
     (#\i 'iyr)
     (#\p 'pid)
-    (#\e (case (char s 1)
+    (#\e (case (char s (1+ i))
            (#\y 'eyr)
            (t 'ecl)))
-    (#\h (case (char s 1)
+    (#\h (case (char s (1+ i))
            (#\c 'hcl)
            (t 'hgt)))))
 
@@ -37,7 +41,7 @@
              (let ((lines (nreverse (shiftf stack nil))))
                (funcall function lines)))))
     (do-input-lines (line 4 (emit))
-      (if (string= line "")
+      (if (= 0 (length line))
           (emit)
           (push line stack)))))
 
@@ -53,13 +57,13 @@
     :do
        (assert (<= start colon end) ())
        (funcall function
-                (field (subseq line start colon))
+                (field line start)
                 (subseq line (1+ colon) end))
     :while find))
 
 (defun map-records (function)
   "Call FUNCTION with a (FIELD . VALUE) association list for all records."
-  (let ((record (make-array 8
+  (let ((record (make-array +fields-count+
                             :element-type '(or null string)
                             :initial-element nil)))
     (declare (dynamic-extent record))
@@ -82,19 +86,22 @@
 
 (declaim (inline year<= valid-height-p))
 
-(defun year<= (min string max)
-  (and string
-       (= 4 (length string))
-       (<= min (parse-integer string) max)))
+(defmacro year<= (min string max)
+  (check-type min number)
+  (check-type max number)
+  (check-type string symbol)
+  `(and ,string
+        ;; (= 4 (length ,string))
+        (string<= ,(princ-to-string min) ,string)
+        (string<= ,string ,(princ-to-string max))))
 
 (defun valid-height-p (string)
   (when string
-    (multiple-value-bind (height end) (parse-integer string :junk-allowed t)
-      (when height
-        (flet ((unitp (u) (string= string u :start1 end)))
-          (cond
-            ((unitp "in") (<=  59 height  76))
-            ((unitp "cm") (<= 150 height 193))))))))
+    (if (char= #\m (char string (1- (length string))))
+        (and (string<= "150" string :end2 3)
+             (string<= string "193" :end1 3))
+        (and (string<= "59" string :end2 2)
+             (string<= string "76" :end1 2)))))
 
 (defmacro regexp (v r)
   (check-type v symbol)
@@ -128,9 +135,9 @@
           (if-let (clauses (remove field body :test-not #'string= :key #'car))
             (add-initform field (map-into clauses #'second clauses))
             (warn "No rule for field ~s" field))))
-      `(let ((,jump-table (make-array ,(length (aoc2020.utils:external-symbols :aoc2020.04.fields))
-                                      :element-type 'function
-                                      :initial-element #'values)))
+      `(let ((,jump-table (make-array +fields-count+
+                           :element-type 'function
+                           :initial-element #'values)))
          ,@initforms
          (defun ,fun-name (,key ,val-name)
            (funcall (aref ,jump-table (symbol-value ,key)) ,val-name))))))
