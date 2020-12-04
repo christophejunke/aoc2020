@@ -18,7 +18,7 @@
 (in-package :aoc2020.04)
 
 (defun field (name)
-  "Find field symbol from NAME"
+  "Find field symbol from NAME."
   (or (find-symbol (string-upcase name) :aoc2020.04.fields)
       (error "Unexpected field ~s" name)))
 
