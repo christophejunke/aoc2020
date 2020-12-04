@@ -1,21 +1,9 @@
 (defpackage :aoc2020.04
   (:use :aoc2020)
-  (:export #:part-1
-           #:part-2
+  (:export #:solve
            #:test))
 
 (in-package :aoc2020.04)
-
-(defun map-line-chunks (function &aux stack)
-  "Read consecutive non-empty lines and call FUNCTION on their concatenation."
-  (flet ((emit ()
-           (when stack
-             (let ((lines (nreverse (shiftf stack nil))))
-               (funcall function (format nil "~{~a~^ ~}" lines))))))
-    (do-input-lines (line 4 (emit))
-      (if (string= line "")
-          (emit)
-          (push line stack)))))
 
 (defpackage aoc2020.04.fields
   (:documentation "Expected symbols for fields in a record.")
@@ -30,8 +18,20 @@
            #:cid))
 
 (defun field (name)
+  "Find field symbol from NAME"
   (or (find-symbol (string-upcase name) :aoc2020.04.fields)
       (error "Unexpected field ~s" name)))
+
+(defun map-line-chunks (function &aux stack)
+  "Read consecutive non-empty lines and call FUNCTION on their concatenation."
+  (flet ((emit ()
+           (when stack
+             (let ((lines (nreverse (shiftf stack nil))))
+               (funcall function (format nil "~{~a~^ ~}" lines))))))
+    (do-input-lines (line 4 (emit))
+      (if (string= line "")
+          (emit)
+          (push line stack)))))
 
 (defun map-records (function)
   "Call FUNCTION with a (FIELD . VALUE) association list for all records."
@@ -55,25 +55,6 @@
     (unless (funcall test field (cdr (assoc field record)))
       (return nil))))
 
-(defun solve-part (validation-test)
-  "Count all records that match VALIDATION-TEST"
-  (count-records-if
-   (lambda (record)
-     (validate-all-fields-if validation-test record))))
-
-;; PART-1
-
-(defun part-1 ()
-  (solve-part
-   (lambda (key value)
-     (case key
-       ;; cid is always valid, even if not present
-       (aoc2020.04.fields:cid t)
-       ;; other fields are mandatory
-       (t value)))))
-
-;; PART-2
-
 (declaim (inline year<= valid-height-p))
 
 (defun year<= (min string max)
@@ -94,45 +75,68 @@
   (check-type v symbol)
   `(and ,v (scan ,r ,v)))
 
-;; I went into a bit of over-engineering rabbit hole
+(defmacro define-validator (fun-name (val-name) &body body)
+  "Define FUN-NAME as a validator predicate of two parameters FIELD and VALUE.
 
-(defmacro define-validators ((name var) &body clauses)
-  "Build an hash-table from fields to validation functions.
-   (check exhaustiveness, mutliple entries for a field mean AND)"
-  (check-type name symbol)
-  (check-type var symbol)
-  (with-gensyms (hash-table)
+   BODY is a (FIELD EXPRESSION) form. Symbol VAL-NAME will be bound in
+   EXPRESSION to the associated value for the FIELD.
+
+   Duplicate clauses for the same FIELD are treated as an AND, their
+   associated expressions are evaluated in the some order as they are
+   declared.
+
+   The validator should be exhaustive, meaning that all expected fields should
+   have at least one expression. Otherwise, a warning is emitted for each
+   missing field."
+  (check-type fun-name symbol)
+  (check-type val-name symbol)
+  (with-gensyms (key hash-table)
     (let (initforms)
       (flet ((add-initform (field expressions)
                (push `(setf (gethash ',field ,hash-table)
                             (compile nil
-                                     (lambda (,var)
-                                       (declare (ignorable ,var))
+                                     (lambda (,val-name)
+                                       (declare (ignorable ,val-name))
                                        (and ,@expressions))))
                      initforms)))
         (do-external-symbols (field :aoc2020.04.fields)
-          (let ((clauses (remove field clauses :test-not #'eql :key #'first)))
-            (if clauses
-                (add-initform field (map-into clauses #'second clauses))
-                (warn "No rule for field ~s" field)))))
-      `(defvar ,name
-         (let ((,hash-table (make-hash-table)))
-           (prog1 ,hash-table
-             ,@initforms))))))
+          (if-let (clauses (remove field body :test-not #'string= :key #'car))
+            (add-initform field (map-into clauses #'second clauses))
+            (warn "No rule for field ~s" field))))
+      `(let ((,hash-table (make-hash-table)))
+         ,@initforms
+         (defun ,fun-name (,key ,val-name)
+           (funcall (gethash ,key ,hash-table) ,val-name))))))
 
-(define-validators (*part-2-validators* v)
-  (aoc2020.04.fields:byr (year<= 1920 v 2002))
-  (aoc2020.04.fields:iyr (year<= 2010 v 2020))
-  (aoc2020.04.fields:eyr (year<= 2020 v 2030))
-  (aoc2020.04.fields:hgt (valid-height-p v))
-  (aoc2020.04.fields:hcl (regexp v "^#[0-9a-f]{6}$"))
-  (aoc2020.04.fields:ecl (regexp v "^(?:amb|blu|brn|gry|grn|hzl|oth)$"))
-  (aoc2020.04.fields:pid (regexp v "^\\d{9}$"))
-  (aoc2020.04.fields:cid t))
+(define-validator part-1/validp (v)
+  ;; all fields are mandatory (v is not null), except CID
+  (BYR v)
+  (IYR v)
+  (EYR v)
+  (HGT v)
+  (HCL v)
+  (ECL v)
+  (PID v)
+  (CID t))
 
-(defun part-2 (&aux (h *part-2-validators*))
-  (solve-part  (lambda (k v) (funcall (gethash k h) v))))
+(define-validator part-2/validp (v)
+  (BYR (year<= 1920 v 2002))
+  (IYR (year<= 2010 v 2020))
+  (EYR (year<= 2020 v 2030))
+  (HGT (valid-height-p v))
+  (HCL (regexp v "^#[0-9a-f]{6}$"))
+  (ECL (regexp v "^(?:amb|blu|brn|gry|grn|hzl|oth)$"))
+  (PID (regexp v "^\\d{9}$"))
+  (CID t))
+
+(defun solve (&aux (p1 0) (p2 0))
+  (map-records
+   (lambda (record)
+     (when (validate-all-fields-if #'part-1/validp record) (incf p1))
+     (when (validate-all-fields-if #'part-2/validp record) (incf p2))))
+  (values p1 p2))
 
 (defun test ()
-  (assert (= 196 (part-1)))
-  (assert (= 114 (part-2))))
+  (multiple-value-bind (p1 p2) (solve)
+    (assert (= p1 196))
+    (assert (= p2 114))))
