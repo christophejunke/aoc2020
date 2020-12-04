@@ -32,6 +32,10 @@
           (emit)
           (push line stack)))))
 
+;; /!\ returning an ALIST without doing further checks means we trust the
+;; input to not have duplicate fields. We could also optimize so that it does
+;; not search this list for each field.
+
 (defun map-records (function)
   "Call FUNCTION with a (FIELD . VALUE) association list for all records."
   (map-line-chunks
