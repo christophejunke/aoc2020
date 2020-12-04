@@ -1,11 +1,4 @@
-(defpackage :aoc2020.04
-  (:use :aoc2020)
-  (:export #:solve
-           #:test))
-
-(in-package :aoc2020.04)
-
-(defpackage aoc2020.04.fields
+(defpackage :aoc2020.04.fields
   (:documentation "Expected symbols for fields in a record.")
   (:use)
   (:export #:byr
@@ -16,6 +9,13 @@
            #:ecl
            #:pid
            #:cid))
+
+(defpackage :aoc2020.04
+  (:use :aoc2020 :aoc2020.04.fields)
+  (:export #:solve
+           #:test))
+
+(in-package :aoc2020.04)
 
 (defun field (name)
   "Find field symbol from NAME"
