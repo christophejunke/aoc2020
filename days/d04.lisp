@@ -15,6 +15,7 @@
 
 (defpackage aoc2020.04.fields
   (:use)
+  (:nicknames d04.f)
   (:export #:byr
            #:iyr
            #:eyr
@@ -42,12 +43,66 @@
                    (incf counter))))
   counter)
 
+(defun validate-all-fields-if (test record)
+  (do-external-symbols (field :aoc2020.04.fields t)
+    (unless (funcall test field (cdr (assoc field record)))
+      (return nil))))
+
+(defun solve-part (validator)
+  (count-records-if
+   (lambda (record)
+     (validate-all-fields-if validator record))))
+
 (defun part-1 ()
-  (count-records-if (lambda (record)
-                      (case (length record)
-                        (8 t)
-                        (7 (not
-                            (assoc 'aoc2020.04.fields:cid record)))))))
+  (solve-part
+   (lambda (k v)
+     (case k
+       (aoc2020.04.fields:cid t)
+       (t v)))))
+
+(defun yearp (s min max)
+  (when s
+    (and (= 4 (length s)) (<= min (parse-integer s) max))))
+
+(defun heightp (s)
+  (when s
+    (multiple-value-bind (height end) (parse-integer s :junk-allowed t)
+      (when height
+        (let ((unit (subseq s end)))
+          (cond
+            ((string= unit "in") (<= 59 height 76))
+            ((string= unit "cm") (<= 150 height 193))))))))
+
+(defun eclp (v)
+  (when v
+    (scan '(:sequence
+            :start-anchor
+            (:alternation
+             "amb" "blu" "brn"
+             "gry" "grn" "hzl" "oth")
+            :end-anchor)
+          v)))
+
+(defun pidp (v)
+  (when v
+    (scan '(:sequence :start-anchor
+            (:greedy-repetition 9 9 :digit-class)
+            :end-anchor)
+          v)))
+
+(defun part-2 ()
+  (solve-part
+   (lambda (k v)
+     (case k
+       (d04.f:byr (yearp v 1920 2002))
+       (d04.f:iyr (yearp v 2010 2020))
+       (d04.f:eyr (yearp v 2020 2030))
+       (d04.f:hgt (heightp v))
+       (d04.f:hcl (and v (scan "^#[0-9a-f]{6,6}$" v)))
+       (d04.f:ecl (eclp v))
+       (d04.f:pid (pidp v))
+       (d04.f:cid t)))))
 
 (defun test ()
-  (assert (= 196 (part-1))))
+  (assert (= 196 (part-1)))
+  (assert (= 114 (part-2))))
