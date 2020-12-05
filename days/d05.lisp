@@ -17,9 +17,6 @@
 (defun as-list (string)
   (map 'list (rcurry #'find "FL") string))
 
-(defun test-front-back-bsp ()
-  (assert (= 44 (bsp (as-list "FBFBBFFRLR") 0 127))))
-
 (defun decode-row-column (string)
   (multiple-value-bind (row rest) (bsp (as-list string) 0 127 128)
     (values row (bsp rest 0 7 8))))
@@ -27,6 +24,25 @@
 (defun row-id (string)
   (multiple-value-bind (row col) (decode-row-column string)
     (values (+ col (* row 8)) row col)))
+
+(defun part-1 ()
+  (with-input (i 5)
+    (loop
+      for line = (read-line i nil nil)
+      while line
+      maximize (row-id line))))
+
+(defun part-2 ()
+  (let ((occupied (make-array (* 128 8) :element-type 'bit)))
+    (do-input-lines (line 5)
+      (setf (aref occupied (row-id line)) 1))
+    ;; find id of unoccupied
+    (values
+     ;; find unoccupied from first occupied
+     (position 0 occupied :start (or (position 1 occupied) 0)))))
+
+(defun test-front-back-bsp ()
+  (assert (= 44 (bsp (as-list "FBFBBFFRLR") 0 127))))
 
 (defun test-samples ()
   (loop 
@@ -39,13 +55,9 @@
          (assert (= col exp-col))
          (assert (= id exp-id)))))
 
-(defun part-1 ()
-  (with-input (i 5)
-    (loop
-      for line = (read-line i nil nil)
-      while line
-      maximize (row-id line))))
-
 (defun test ()
   (test-front-back-bsp)
-  (test-samples))
+  (test-samples)
+  (assert (= (part-1) 980))
+  (assert (= (part-2) 607)))
+
