@@ -2,7 +2,7 @@
   (:import-from :aoc2020.04
                 aoc2020.04:map-line-chunks)
   (:use :aoc2020)
-  (:export #:part-1
+  (:export #:solve
            #:test))
 
 (in-package :aoc2020.06)
