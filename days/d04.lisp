@@ -39,14 +39,15 @@
 
 (defun map-records (function)
   "Call FUNCTION with a (FIELD . VALUE) association list for all records."
-  (map-line-chunks 04
-                   (lambda (lines)
-                     (let ((line (format nil "~{~a~^ ~}" lines)))
-                       (funcall function
-                                (loop
-                                  :for field :in (split #\space line :sharedp t)
-                                  :for (name value) := (split #\: field :sharedp t)
-                                  :collect (cons (field name) value)))))))
+  (map-line-chunks
+   04
+   (lambda (lines)
+     (let ((line (format nil "~{~a~^ ~}" lines)))
+       (funcall function
+                (loop
+                  :for field :in (split #\space line :sharedp t)
+                  :for (name value) := (split #\: field :sharedp t)
+                  :collect (cons (field name) value)))))))
 
 (defun validate-all-fields-if (test record)
   "Check that for each expected FIELD, (FUNCALL TEST FIELD VALUE) is true.
