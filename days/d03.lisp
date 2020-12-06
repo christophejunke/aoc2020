@@ -1,5 +1,6 @@
 (defpackage :aoc2020.03
-  (:use :aoc2020))
+  (:use :aoc2020)
+  (:export #:test))
 
 (in-package :aoc2020.03)
 
