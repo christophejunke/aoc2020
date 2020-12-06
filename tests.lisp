@@ -4,8 +4,9 @@
   `(progn
      (defun ,name ()
        ,@body)
-     (setf (get ',name 'test) t)
-     (setf (get ',name 'dirty) t)))
+     (eval-when (:compile-toplevel)
+       (setf (get ',name 'test) t)
+       (setf (get ',name 'dirty) t))))
 
 (defun test-all (&optional (force nil))
   (with-standard-io-syntax
