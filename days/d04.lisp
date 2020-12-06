@@ -11,7 +11,8 @@
 
 (defpackage :aoc2020.04
   (:use :aoc2020 :aoc2020.04.fields)
-  (:export #:solve
+  (:export #:map-line-chunks
+           #:solve
            #:test))
 
 (in-package :aoc2020.04)
@@ -21,13 +22,13 @@
   (or (find-symbol (string-upcase name) :aoc2020.04.fields)
       (error "Unexpected field ~s" name)))
 
-(defun map-line-chunks (function &aux stack)
+(defun map-line-chunks (in function &aux stack)
   "Read consecutive non-empty lines and call FUNCTION on their concatenation."
   (flet ((emit ()
            (when stack
              (let ((lines (nreverse (shiftf stack nil))))
-               (funcall function (format nil "~{~a~^ ~}" lines))))))
-    (do-input-lines (line 4 (emit))
+               (funcall function lines)))))
+    (do-input-lines (line in (emit))
       (if (string= line "")
           (emit)
           (push line stack)))))
@@ -38,13 +39,14 @@
 
 (defun map-records (function)
   "Call FUNCTION with a (FIELD . VALUE) association list for all records."
-  (map-line-chunks
-   (lambda (line)
-     (funcall function
-              (loop
-                :for field :in (split #\space line :sharedp t)
-                :for (name value) := (split #\: field :sharedp t)
-                :collect (cons (field name) value))))))
+  (map-line-chunks 04
+                   (lambda (lines)
+                     (let ((line (format nil "~{~a~^ ~}" lines)))
+                       (funcall function
+                                (loop
+                                  :for field :in (split #\space line :sharedp t)
+                                  :for (name value) := (split #\: field :sharedp t)
+                                  :collect (cons (field name) value)))))))
 
 (defun validate-all-fields-if (test record)
   "Check that for each expected FIELD, (FUNCALL TEST FIELD VALUE) is true.
