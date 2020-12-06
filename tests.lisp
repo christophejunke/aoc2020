@@ -4,7 +4,7 @@
   `(progn
      (defun ,name ()
        ,@body)
-     (eval-when (:compile-toplevel)
+     (eval-when (:compile-toplevel :execute)
        (setf (get ',name 'test) t)
        (setf (get ',name 'dirty) t))))
 
