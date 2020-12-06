@@ -6,6 +6,7 @@
            #:do-input-lines
            #:with-input
            #:slurp-line
+           #:map-line-chunks           
            #:int
            #:word
            #:letter

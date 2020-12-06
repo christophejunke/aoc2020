@@ -11,8 +11,7 @@
 
 (defpackage :aoc2020.04
   (:use :aoc2020 :aoc2020.04.fields)
-  (:export #:map-line-chunks
-           #:solve
+  (:export #:solve 
            #:test))
 
 (in-package :aoc2020.04)
@@ -21,17 +20,6 @@
   "Find field symbol from NAME."
   (or (find-symbol (string-upcase name) :aoc2020.04.fields)
       (error "Unexpected field ~s" name)))
-
-(defun map-line-chunks (in function &aux stack)
-  "Read consecutive non-empty lines and call FUNCTION on their concatenation."
-  (flet ((emit ()
-           (when stack
-             (let ((lines (nreverse (shiftf stack nil))))
-               (funcall function lines)))))
-    (do-input-lines (line in (emit))
-      (if (string= line "")
-          (emit)
-          (push line stack)))))
 
 ;; /!\ returning an ALIST without doing further checks means we trust the
 ;; input to not have duplicate fields. We could also optimize so that it does

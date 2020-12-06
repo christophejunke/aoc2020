@@ -20,3 +20,14 @@
   (with-input (s input)
     (read-line s)))
 
+(defun map-line-chunks (in function &aux stack)
+  "Read consecutive non-empty lines and call FUNCTION on their concatenation."
+  (flet ((emit ()
+           (when stack
+             (let ((lines (nreverse (shiftf stack nil))))
+               (funcall function lines)))))
+    (do-input-lines (line in (emit))
+      (if (string= line "")
+          (emit)
+          (push line stack)))))
+

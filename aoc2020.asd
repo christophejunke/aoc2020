@@ -1,13 +1,5 @@
-(defsystem "aoc2020"
-  :depends-on ("alexandria"
-               "cl-ppcre"
-               "drakma"
-               "local-time"
-               "local-time-duration"
-               "series"
-               "trivia"
-               "trivia.quasiquote"
-               "uiop")
+(defsystem :aoc2020
+  :depends-on (:aoc2020.requirements)
   :serial nil
   :components ((:file "utils")
                (:file "fetch")

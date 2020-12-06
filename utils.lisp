@@ -35,3 +35,4 @@
                    (let ((,p (find-package ',enum-name)))
                      (assert ,p)
                      ,@actions))))))
+
