@@ -29,7 +29,8 @@
                                (incf c2 (logcount p2)))))
   (values c1 c2))
 
-(defun test ()
+(define-test test
   (multiple-value-bind (part-1 part-2) (solve)
     (assert (= part-1 6686))
     (assert (= part-2 3476))))
+

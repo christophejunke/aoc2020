@@ -1,8 +1,6 @@
 (defpackage #:aoc2020.utils 
   (:use :cl :alexandria)
   (:export #:external-symbols
-           #:do-input-lines
-           #:with-input
            #:defpackage/enum))
 
 (in-package aoc2020.utils)
@@ -37,4 +35,3 @@
                    (let ((,p (find-package ',enum-name)))
                      (assert ,p)
                      ,@actions))))))
-

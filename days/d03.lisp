@@ -26,6 +26,7 @@
      :for total = count :then (* total count)
      :finally (return total)))
 
-(defun test (&optional (grid (input-grid)))
-  (assert (= (part-1 grid) 276))
-  (assert (= (part-2 grid) 7812180000)))
+(define-test test 
+  (let  ((grid (input-grid)))
+    (assert (= (part-1 grid) 276))
+    (assert (= (part-2 grid) 7812180000))))

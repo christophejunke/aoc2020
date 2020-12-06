@@ -53,7 +53,7 @@
        ;; scan lines from the stream
        (z:scan-stream stream #'read-line)))))
 
-(defun test ()
+(define-test test
   (multiple-value-bind (p1 p2) (solve)
     (assert (= p1 422))
     (assert (= p2 451))))

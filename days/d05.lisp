@@ -2,8 +2,7 @@
   (:use :aoc2020)
   (:export #:test
            #:part-1
-           #:part-2
-           #:solve))
+           #:part-2))
 
 (in-package :aoc2020.05)
 
@@ -35,7 +34,7 @@
                         ("BBFFBBFRLL" 820))
     do (assert (= (row-id s) exp-id))))
 
-(defun test ()
+(define-test test
   (test-front-back-bsp)
   (test-samples)
   (assert (= (part-1) 980))

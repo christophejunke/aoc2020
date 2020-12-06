@@ -137,7 +137,7 @@
      (when (validate-all-fields-if #'part-2/validp record) (incf p2))))
   (values p1 p2))
 
-(defun test ()
+(define-test test
   (multiple-value-bind (p1 p2) (solve)
     (assert (= p1 196))
     (assert (= p2 114))))
