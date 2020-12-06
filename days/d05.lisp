@@ -24,18 +24,6 @@
   (make-array (list 128 8) :element-type 'bit
                            :displaced-to bitvector))
 
-(defun test-front-back-bsp ()
-  (assert (= 44 (bsp (as-list "FBFBBFFRLR") 0 127))))
-
-(defun test-samples ()
-  (loop
-    for (s exp-id) in '(("BFFFBBFRRR" 567)
-                        ("FFFBBBFRRR" 119)
-                        ("BBFFBBFRLL" 820))
-    do (assert (= (row-id s) exp-id))))
-
 (define-test test
-  (test-front-back-bsp)
-  (test-samples)
   (assert (= (part-1) 980))
   (assert (= (part-2) 607)))
