@@ -1,6 +1,6 @@
 (defpackage :aoc2020
   (:use . #1=(:cl :alexandria :ppcre :trivia
-              :named-readtables
+              :named-readtables :esrap
                   :aoc2020.fetch :aoc2020.utils))
   (:export #:fold-input-lines
            #:do-input-lines

@@ -20,7 +20,7 @@
                              (:file "d03")
                              (:file "d04")
                              (:file "d05")
-                             (:file "d06" :depends-on ("d04"))
+                             (:file "d06")
                              (:file "d07")
                              (:file "d08")
                              (:file "d09")
