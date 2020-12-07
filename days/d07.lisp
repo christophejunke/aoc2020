@@ -44,6 +44,8 @@
           (:backward
            (loop :for (_ b) :in bags :do (push bag (gethash b h)))))))))
 
+;; see also branch d07.equal
+
 (defun part-1 (&optional (in 7) &aux (h (rules :backward in)))
   (labels ((visit (c)
              (reduce #'union
