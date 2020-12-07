@@ -35,36 +35,31 @@
 (defun sentence (s)
   (parse 'sentence s))
 
-(defun rules (&optional (in 7))
-  (let ((forward (make-hash-table :test #'equal))
-        (backward (make-hash-table :test #'equal)))
-    (do-input-lines (line in (values forward backward))
+(defun rules (direction &optional (in 7))
+  (let ((h (make-hash-table :test #'equal)))
+    (do-input-lines (line in h)
       (destructuring-bind (bag . bags) (sentence line)
-        (setf (gethash bag forward) bags)
-        (loop for (_ b) in bags do (push bag (gethash b backward)))))))
+        (ecase direction
+          (:forward (setf (gethash bag h) bags))
+          (:backward
+           (loop :for (_ b) :in bags :do (push bag (gethash b h)))))))))
 
-(defun part-1 (&optional (in 7))
-  (multiple-value-bind (forward backward) (rules in)
-    (let ((roots (make-hash-table :test #'equal)))
-      (labels ((visit (color)
-                 (dolist (p (gethash color backward))
-                   (visit p))
-                 (when (gethash color forward)
-                   (setf (gethash color roots) t))))
-        (visit "shiny gold"))
-      (1- (hash-table-count roots)))))
+(defun part-1 (&optional (in 7) &aux (h (rules :backward in)))
+  (labels ((visit (c)
+             (reduce #'union
+                     (mapcar #'visit (gethash c h))
+                     :initial-value (list c))))
+    (1- (length (visit "shiny gold")))))
 
-(defun part-2 (&optional (in 7))
-  (multiple-value-bind (forward backward) (rules in)
-    (declare (ignore backward))
-    (labels ((visit (bag)
-               (1+ (loop
-                     for (n b) in (gethash bag forward)
-                     sum (* n (visit b))))))
-      (1- (visit "shiny gold")))))
+(defun part-2 (&optional (in 7) &aux (h (rules :forward in)))
+  (labels ((visit (c)
+             (1+ (loop :for (n b) :in (gethash c h)
+                       :sum (* n (visit b))))))
+    (1- (visit "shiny gold"))))
 
 (define-test test
   (assert (= 4 (part-1 "07-t1")))
   (assert (= 121 (part-1)))
   (assert (= 126 (part-2 "07-t2")))
   (assert (= 3805 (part-2))))
+
