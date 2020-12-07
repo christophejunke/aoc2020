@@ -1,7 +1,6 @@
 all: quicksbcl test-from-scratch
 
 quicksbcl: Makefile aoc2020.requirements.asd
-	@echo "# QUICKSBCL"
 	@sbcl \
 	--noinform \
 	--no-userinit \
@@ -11,7 +10,6 @@ quicksbcl: Makefile aoc2020.requirements.asd
 	--eval '(sb-ext:save-lisp-and-die "quicksbcl" :executable t)'
 
 test-from-scratch :
-	@echo "# TESTS"
 	@./quicksbcl \
 	--noinform \
 	--eval '(ql:quickload :aoc2020 :silent t)' \
