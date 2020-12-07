@@ -10,23 +10,19 @@
 (defun char-idx (c)
   (- (char-code c) #.(char-code #\a)))
 
-(defun mask (answer-string)
-  (loop
-    with mask = 0
-    for c across answer-string
-    do (setf (logbitp (char-idx c) mask) t)
-    finally (return mask)))
+(defun letters (answer-string)
+  (coerce (delete-duplicates answer-string) 'list))
 
 (defun solve (&aux (c1 0) (c2 0))
   (map-line-chunks 06
                    (lambda (group)
                      (loop
                        for answer-string in group
-                       for m = (mask answer-string)
-                       for p1 = m then (logior p1 m)
-                       for p2 = m then (logand p2 m)
-                       finally (incf c1 (logcount p1))
-                               (incf c2 (logcount p2)))))
+                       for letters = (letters answer-string)
+                       for p1 = letters then (union p1 letters)
+                       for p2 = letters then (intersection p2 letters)
+                       finally (incf c1 (length p1))
+                               (incf c2 (length p2)))))
   (values c1 c2))
 
 (defun test ()
