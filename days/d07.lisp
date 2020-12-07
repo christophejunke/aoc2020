@@ -10,31 +10,24 @@
 (defrule color (and word ws word)
   (:text t))
 
-(defrule digit (digit-char-p character)
-  (:function digit-char-p))
-
-(defrule bag (or "bags" "bag")
-  (:constant :bag))
+(defrule quantity (+ (digit-char-p character))
+  (:text t)
+  (:function parse-integer))
 
 (defrule ws " "
   (:text t))
 
-(defrule desc (and digit ws color ws bag)
-  (:function (lambda (list)
-               (vector (first list) (third list)))))
+(defrule bag (and quantity ws color ws (or "bags" "bag"))
+  (:lambda (list) (list (first list) (third list))))
 
-(defrule content (or (and desc ", " content) desc)
-  (:function (lambda (in)
-               (mapcar (lambda (u) (coerce u 'list))
-                       (etypecase in
-                         (vector (list in))
-                         (cons (cons (first in) (third in))))))))
+(defrule bags (and bag (or (and ", " bags) (and "")))
+  (:destructure (head tail) (cons head (second tail))))
 
-(defrule yes (and color ws "bags contain" ws content ".")
-  (:function (lambda (items) (list* (first items) (fifth items)))))
+(defrule yes (and color ws "bags contain" ws bags ".")
+  (:lambda (items) (list* (first items) (fifth items))))
 
 (defrule no (and color ws "bags contain no other bags.")
-  (:function (lambda (items) (list (first items)))))
+  (:lambda (items) (list (first items))))
 
 (defrule sentence (or yes no))
 
@@ -58,8 +51,7 @@
                  (when (gethash color forward)
                    (setf (gethash color roots) t))))
         (visit "shiny gold"))
-      (remhash "shiny gold" roots)
-      (hash-table-count roots))))
+      (1- (hash-table-count roots)))))
 
 (defun part-2 (&optional (in 7))
   (multiple-value-bind (forward backward) (rules in)
