@@ -40,13 +40,33 @@
     (do-input-lines (line in h)
       (destructuring-bind (bag . bags) (sentence line)
         (ecase direction
-          (:forward (setf (gethash bag h) bags))
+          (:forward
+           (setf (gethash bag h) bags))
           (:backward
-           (loop :for (_ b) :in bags :do (push bag (gethash b h)))))))))
+           (loop
+             :for (_ b) :in bags
+             :do (pushnew bag (gethash b h) :test #'equal))))))))
+
+
+;;
+;; NB. UNION can work here without specifying the :TEST argument (see previous
+;; commit) because the strings that are EQUAL are in fact also EQ. We are
+;; lucky because BAG is not repeated in rules (see :BACKWARD case in RULES
+;; above). The code is update to add the test just to be clear.
+;;
+;; (progn
+;;   (write (hash-table-alist (rules :backward "07-t1")) :circle t)
+;;   (values))
+;;
+;; (("dotted black" #1="vibrant plum" #2="dark olive")
+;;  ("vibrant plum" #3="shiny gold") ("dark olive" #3#)
+;;  ("faded blue" #1# #2# #4="muted yellow") ("shiny gold" #4# "bright white")
+;;  ("muted yellow" #5="dark orange" #6="light red") ("bright white" #5# #6#))
+;;
 
 (defun part-1 (&optional (in 7) &aux (h (rules :backward in)))
   (labels ((visit (c)
-             (reduce #'union
+             (reduce (rcurry #'union :test #'equalp)
                      (mapcar #'visit (gethash c h))
                      :initial-value (list c))))
     (1- (length (visit "shiny gold")))))
