@@ -4,32 +4,33 @@
 
 (in-package :aoc2020.07)
 
+(defrule empty ""
+  (:constant nil))
+
+(defrule no-bag "no other bags"
+  (:constant nil))
+
 (defrule word (+ (alpha-char-p character))
   (:text t))
 
-(defrule color (and word ws word)
+(defrule color (and word " " word)
   (:text t))
 
 (defrule quantity (+ (digit-char-p character))
   (:text t)
   (:function parse-integer))
 
-(defrule ws " "
-  (:text t))
+(defrule bag (and quantity " " color " " (or "bags" "bag"))
+  (:lambda (ast) (list (first ast) (third ast))))
 
-(defrule bag (and quantity ws color ws (or "bags" "bag"))
-  (:lambda (list) (list (first list) (third list))))
+(defrule bags* (or (and ", " bags) (and ""))
+  (:function second))
 
-(defrule bags (and bag (or (and ", " bags) (and "")))
-  (:destructure (head tail) (cons head (second tail))))
+(defrule bags (and bag bags*)
+  (:destructure (bag bags) (cons bag bags)))
 
-(defrule yes (and color ws "bags contain" ws bags ".")
-  (:lambda (items) (list* (first items) (fifth items))))
-
-(defrule no (and color ws "bags contain no other bags.")
-  (:lambda (items) (list (first items))))
-
-(defrule sentence (or yes no))
+(defrule sentence (and color " bags contain " (or no-bag bags) ".")
+  (:lambda (ast) (cons (first ast) (third ast))))
 
 (defun sentence (s)
   (parse 'sentence s))
