@@ -22,8 +22,7 @@
       (setf (aref seats (seat-id line)) 1))))
 
 (defun dbg/as-grid (bitvector)
-  (make-array (list 128 8) :element-type 'bit
-                           :displaced-to bitvector))
+  (make-array (list 128 8) :element-type 'bit :displaced-to bitvector))
 
 (defun test-front-back-bsp ()
   (assert (= 44 (bsp (as-list "FBFBBFFRLR") 0 127))))
