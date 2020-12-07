@@ -49,10 +49,6 @@
     (string (input-pathname (make-pathname :name in)))
     (pathname (merge-pathnames in *input-base*))))
 
-;;
-;; Use responsibly, do not call too often
-;;
-
 (defparameter *next-fetch-time* nil)
 
 (defparameter *fetch-limit* (duration :minute 15))
