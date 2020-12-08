@@ -23,14 +23,26 @@
       ;; normal end of program
       (values 'END :ok)))
 
-(defun run (code &aux (pc 0) (acc 0))
+(defun run (code &optional cb &aux (pc 0) (acc 0))
   (loop
     (multiple-value-bind (instruction n) (fetch code pc)
+      (when cb (funcall cb pc instruction n))
       (ecase instruction
         (END (return (values acc n)))
         (NOP (incf pc 1))
         (ACC (incf pc 1) (incf acc n))
         (JMP (incf pc n))))))
+
+(defun backmap (program)
+  (let ((hash (make-hash-table)))
+    (prog1 hash
+      (labels ((mark (src dst)
+                 (push src (gethash dst hash)))
+               (visit (pc op n)
+                 (when-let (next (case op ((NOP ACC) (1+ pc)) (JMP (+ pc n))))
+                   (push pc (gethash next hash)))))
+        (mark :start 0)
+        (run program #'visit)))))
 
 (defun part-1 (&optional (in 8))
   (run (program in)))
