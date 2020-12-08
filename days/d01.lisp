@@ -1,8 +1,6 @@
 (defpackage :aoc2020.01
   (:use :aoc2020)
-  (:export #:part-1
-           #:part-2
-           #:solve))
+  (:export #:test))
 
 (in-package :aoc2020.01)
 
@@ -73,3 +71,8 @@
 (defun solve ()
   (values (sum-n 2)
           (sum-n 3)))
+
+(define-test test
+  (multiple-value-bind (p1 p2) (solve)
+    (assert (= p1 889779))
+    (assert (= p2 76110336))))
