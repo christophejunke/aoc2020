@@ -36,12 +36,12 @@
 (defun backmap (program)
   (let ((hash (make-hash-table)))
     (prog1 hash
-      (labels ((mark (src dst)
-                 (push src (gethash dst hash)))
-               (visit (pc op n)
-                 (when-let (next (case op ((NOP ACC) (1+ pc)) (JMP (+ pc n))))
-                   (push pc (gethash next hash)))))
-        (mark :start 0)
+      (flet ((visit (pc op n)
+               (when-let (next (case op 
+                                 ((ACC) (1+ pc))
+                                 ;; NOP is a potential JMP
+                                 ((NOP JMP) (+ pc n))))
+                 (push (cons op pc) (gethash next hash)))))
         (run program #'visit)))))
 
 (defun part-1 (&optional (in 8))
