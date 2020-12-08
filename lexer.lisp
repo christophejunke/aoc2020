@@ -40,8 +40,10 @@
                (when debugp
                  (print `(:feed ,state-fn ,c) *trace-output*))
                (funcall state-fn c))
-             (switch-to (s)
-               (setf state-fn s))
+             (switch-to (s &optional c)
+               (setf state-fn s)
+               (when c
+                 (feed-fsm c)))
              (clear ()
                (setf length-param 0)
                (setf (fill-pointer buffer) 0))
@@ -64,12 +66,11 @@
                    (#\% (buffer c)
                         (switch-to #'dispatch))
                    (t (finish-literal-token)
-                      (switch-to #'await-type)
-                      (feed-fsm c))))
+                      (switch-to #'await-type c))))
                (await-length-param (c)
                  (if-let (d (digit-char-p c))
                    (setf length-param (+ (* length-param 10) d))
-                   (await-type c)))
+                   (switch-to #'await-type c)))
                (await-type (c)
                  (flet ((emit/dispatch (&rest token)
                           (apply #'emit token)
@@ -80,8 +81,7 @@
                      (#\s (emit/dispatch :word))
                      (t (cond
                           ((digit-char-p c)
-                           (switch-to #'await-length-param)
-                           (feed-fsm c))
+                           (switch-to #'await-length-param c))
                           (t (error "unexpected %~a sequence" c))))))))
         ;; lexer
         (loop
