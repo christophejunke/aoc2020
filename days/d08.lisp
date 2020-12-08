@@ -14,11 +14,9 @@
           arg)))
 
 (defun program (&optional (in 8))
-  (let ((code (make-array 128 :adjustable t :fill-pointer 0)))
+  (let ((code (make-buffer)))
     (do-input-lines (line in code)
-      (vector-push-extend (instruction line)
-                          code
-                          (array-total-size code)))))
+      (buffer-push code (instruction line)))))
 
 (defun run (code &aux (pc 0) (acc 0))
   (flet ((fetch ()

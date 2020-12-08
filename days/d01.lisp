@@ -18,14 +18,9 @@
       (error "Not found"))))
 
 (defun input ()
-  (let ((elements (make-array 128
-                              :element-type '(integer 0)
-                              :adjustable t
-                              :fill-pointer 0)))
+  (let ((elements (make-buffer '(integer 0) 128)))
     (do-input-lines (line 01 elements)
-      (vector-push-extend (parse-integer line)
-                          elements
-                          (array-total-size elements)))))
+      (buffer-push elements (parse-integer line)))))
 
 (defun find-sum-3 (&optional (total 2020) (in (input)))
   (loop
