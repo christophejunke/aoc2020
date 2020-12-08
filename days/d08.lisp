@@ -4,48 +4,50 @@
 
 (in-package :aoc2020.08)
 
-(defun instruction (line)
-  (scanner-bind ("%s %i" inst arg) line
-    (assert (and inst arg))
-    (cons (case (char inst 0)
-            (#\n 'nop)
-            (#\a 'acc)
-            (#\j 'jmp))
-          arg)))
-
 (defun program (&optional (in 8))
   (let ((code (make-buffer)))
-    (do-input-lines (line in code)
-      (buffer-push code (instruction line)))))
+    (do-input-lines (line in (coerce code 'simple-vector))
+      (scanner-bind ("%s %i" instruction operand) line
+        (assert instruction)
+        (buffer-push code (cons (case (char instruction 0)
+                                  (#\n 'NOP)
+                                  (#\a 'ACC)
+                                  (#\j 'JMP))
+                                operand))))))
+
+(defun fetch (code pc)
+  (if (array-in-bounds-p code pc)
+      ;; replace by end instruction to detect loops
+      (destructuring-bind (inst . n) (shiftf (aref code pc) '(END))
+        (values inst n))
+      ;; normal end of program
+      (values 'END :ok)))
 
 (defun run (code &aux (pc 0) (acc 0))
-  (flet ((fetch ()
-           (if (array-in-bounds-p code pc)
-               (shiftf (aref code pc) '(stop))
-               (return-from run (values acc t))))
-         (jmp (n) (incf pc n)))
-    (loop
-      (destructuring-bind (op . arg) (fetch)
-        (case op
-          (stop (return acc))
-          (nop (jmp 1))
-          (acc (incf acc arg) (jmp 1))
-          (jmp (jmp arg)))))))
+  (loop
+    (multiple-value-bind (instruction n) (fetch code pc)
+      (ecase instruction
+        (END (return (values acc n)))
+        (NOP (incf pc 1))
+        (ACC (incf pc 1) (incf acc n))
+        (JMP (incf pc n))))))
 
 (defun part-1 (&optional (in 8))
   (run (program in)))
 
 (defun part-2 (&optional (in 8))
-  (let ((code (program in)))
-    (dotimes (i (length code) :not-found)
-      (destructuring-bind (o . a) (aref code i)
-        (unless (eq o 'acc)
-          (let ((code (copy-seq code)))
-            (setf (aref code i) (cons (case o (jmp 'nop) (nop 'jmp)) a))
-            (multiple-value-bind (acc ok) (run code)
-              (when ok
-                (return acc)))))))))
+  (flet ((swap (op) (ecase op (JMP 'NOP) (NOP 'JMP))))
+    (let ((code (program in)))
+      (dotimes (i (length code) :not-found)
+        (destructuring-bind (inst . n) (aref code i)
+          (unless (eq inst 'ACC)
+            (let ((code (copy-seq code)))
+              (setf (aref code i) (cons (swap inst) n))
+              (multiple-value-bind (acc ok) (run code)
+                (when ok
+                  (return acc))))))))))
 
 (define-test test
   (assert (= 1930 (part-1)))
   (assert (= 1688 (part-2))))
+
