@@ -15,7 +15,7 @@
           (*print-escape* nil)
           (pass t))
       (loop
-        for day from 1 upto 25
+        for day from 0 upto 25
         for package = (find-package (format nil "AOC2020.~2,'0d" day))
         do 
            (do-external-symbols (s package nil)
