@@ -1,8 +1,6 @@
 (defpackage :aoc2020.01
   (:use :aoc2020)
-  (:export #:part-1
-           #:part-2
-           #:solve))
+  (:export #:test))
 
 (in-package :aoc2020.01)
 
@@ -20,14 +18,9 @@
       (error "Not found"))))
 
 (defun input ()
-  (let ((elements (make-array 128
-                              :element-type '(integer 0)
-                              :adjustable t
-                              :fill-pointer 0)))
+  (let ((elements (make-buffer '(integer 0) 128)))
     (do-input-lines (line 01 elements)
-      (vector-push-extend (parse-integer line)
-                          elements
-                          (array-total-size elements)))))
+      (buffer-push elements (parse-integer line)))))
 
 (defun find-sum-3 (&optional (total 2020) (in (input)))
   (loop
@@ -73,3 +66,8 @@
 (defun solve ()
   (values (sum-n 2)
           (sum-n 3)))
+
+(define-test test
+  (multiple-value-bind (p1 p2) (solve)
+    (assert (= p1 889779))
+    (assert (= p2 76110336))))

@@ -1,7 +1,9 @@
 (defpackage #:aoc2020.utils 
   (:use :cl :alexandria)
   (:export #:external-symbols
-           #:defpackage/enum))
+           #:defpackage/enum
+           #:make-buffer
+           #:buffer-push))
 
 (in-package aoc2020.utils)
 
@@ -36,3 +38,11 @@
                      (assert ,p)
                      ,@actions))))))
 
+(defun make-buffer (&optional (element-type t) (size 128))
+  (make-array (max 1 size)
+              :element-type element-type
+              :fill-pointer 0
+              :adjustable t))
+
+(defun buffer-push (buffer value)
+  (vector-push-extend value buffer (array-total-size buffer)))
