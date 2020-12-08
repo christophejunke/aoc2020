@@ -12,7 +12,8 @@
   (with-standard-io-syntax
     (let ((*print-pretty* t)
           (*print-right-margin* most-positive-fixnum)
-          (*print-escape* nil))
+          (*print-escape* nil)
+          (pass t))
       (loop
         for day from 1 upto 25
         for package = (find-package (format nil "AOC2020.~2,'0d" day))
@@ -24,7 +25,8 @@
                (when (or force (get s 'dirty))
                  (multiple-value-bind (v e) (ignore-errors (values (funcall f)))
                    (declare (ignore v))
-                   (unless e (setf (get s 'dirty) nil))
+                   (if e (setf pass nil) (setf (get s 'dirty) nil))
                    (format *trace-output*
                            "~&> ~2,'0d~:[~;~:*~{ ~a: ~a~}~]~%"
-                           day (if e (list s e)))))))))))
+                           day (if e (list s e))))))))
+      pass)))

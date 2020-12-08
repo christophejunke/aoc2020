@@ -1,5 +1,6 @@
 all: quicksbcl test-from-scratch
 
+# precompile all dependencies and save the resulting image
 quicksbcl: Makefile aoc2020.requirements.asd
 	@sbcl \
 	--noinform \
@@ -7,11 +8,12 @@ quicksbcl: Makefile aoc2020.requirements.asd
 	--eval '(load #p"~/quicklisp/setup.lisp")' \
 	--eval '(ql:register-local-projects)' \
 	--eval '(ql:quickload :aoc2020.requirements)' \
-	--eval '(sb-ext:save-lisp-and-die "quicksbcl" :executable t)'
+	--eval "(sb-ext:save-lisp-and-die \"$@\" :executable t)"
 
 test-from-scratch :
 	@./quicksbcl \
 	--noinform \
+	--no-userinit \
 	--eval '(ql:quickload :aoc2020 :silent t)' \
-	--eval '(aoc2020:test-all)' \
+	--eval '(or (aoc2020:test-all) (sb-ext:quit :unix-status -1))' \
 	--quit
