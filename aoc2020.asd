@@ -3,7 +3,7 @@
   :serial nil
   :components ((:file "utils")
                (:file "fetch")
-               (:file "package")
+               (:file "package" :depends-on ("utils"))
                (:file "setup" :depends-on ("utils" "fetch" "package"))
                (:file "inputs" :depends-on ("setup"))
                (:file "lexer" :depends-on ("setup"))
