@@ -30,7 +30,38 @@
 
 (defvar *part-1* 393911906)
 
+(defun part-2-input ()
+  (with-input (in 9)
+    (z:collect '(vector fixnum)
+      (z:choose
+       (z:mapping (((v) (z:scan-stream in)))
+                  (and (< v *part-1*) v))))))
+
+(defun part-2 ()
+  (let ((all (part-2-input)))
+    (let ((window (make-array 3
+                              :element-type 'fixnum
+                              :displaced-to all)))
+      (flet ((adjust (size offset)
+               (setf window
+                     (adjust-array window
+                                   size
+                                   :element-type 'fixnum
+                                   :displaced-to all
+                                   :displaced-index-offset offset))))
+        (loop
+          for size from 3 below (length all)
+          do (loop
+               for offset from 0 below (- (length all) size)
+               do (adjust size offset)
+                  (when (= *part-1* (reduce #'+ window))
+                    (return-from part-2
+                      (+ (reduce #'min window)
+                         (reduce #'max window))))))))))
+
+
 (define-test test
   (with-input-from-string (in "35 20 15 25 47 40 62 55 65 95 102 117 150 182 127 219 299 277 309 576")
     (assert (= 127 (part-1/size 5 in))))
-  (assert (= *part-1* (part-1))))
+  (assert (= *part-1* (part-1)))
+  (assert (=  59341885 (part-2))))
