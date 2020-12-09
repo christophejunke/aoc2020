@@ -8,14 +8,10 @@
 
 (defun sum-of-two (value &rest elements)
   "Return VALUE if it cannot be a sum of two values in ELEMENTS"
-  (prog1 nil
-    (map-combinations (lambda (v)
-                        (destructuring-bind (a b) v
-                          (unless (= a b)
-                            (when (= value (+ a b))
-                              (return-from sum-of-two t)))))
-                      elements
-                      :length 2)))
+  (do-combinations (a b) elements
+    (unless (= a b)
+      (when (= value (+ a b))
+        (return t)))))
 
 ;; (chunk M N Z) iterates over a serie Z by step N. For each
 ;; position P that is a multiple of N (the column), it produces M

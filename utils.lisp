@@ -5,7 +5,8 @@
            #:make-window
            #:adjust-window
            #:make-buffer
-           #:buffer-push))
+           #:buffer-push
+           #:do-combinations))
 
 (in-package aoc2020.utils)
 
@@ -63,3 +64,20 @@
                   :element-type (array-element-type source)
                   :displaced-to source
                   :displaced-index-offset (if op offset %offset))))
+
+(defmacro do-combinations (vars list &body body)
+  `(prog ()
+      (map-combinations
+       ,(typecase vars
+          (symbol `(lambda (,vars) ,@body))
+          (list `(curry #'apply (lambda ,vars ,@body)))
+          (vector (with-gensyms (vec)
+                    `(lambda (,vec)
+                       (symbol-macrolet
+                           ,(loop
+                              for i from 0
+                              for v across vars
+                              collect `(,v (aref ,vec ,i)))
+                         ,@body)))))
+       ,list
+       :length ,(length vars))))
