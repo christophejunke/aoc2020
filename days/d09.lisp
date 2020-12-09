@@ -62,6 +62,6 @@
 
 (define-test test
   (with-input-from-string (in "35 20 15 25 47 40 62 55 65 95 102 117 150 182 127 219 299 277 309 576")
-    (assert (= 127 (part-1/size 5 in))))
+    (assert (= 127 (part-1-expand 5 in))))
   (assert (= *part-1* (part-1)))
   (assert (=  59341885 (part-2))))
