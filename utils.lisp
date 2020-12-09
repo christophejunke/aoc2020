@@ -1,7 +1,9 @@
-(defpackage #:aoc2020.utils 
+(defpackage #:aoc2020.utils
   (:use :cl :alexandria)
   (:export #:external-symbols
            #:defpackage/enum
+           #:make-window
+           #:adjust-window
            #:make-buffer
            #:buffer-push))
 
@@ -46,3 +48,18 @@
 
 (defun buffer-push (buffer value)
   (vector-push-extend value buffer (array-total-size buffer)))
+
+(defun make-window (source &key (size 0) (offset 0))
+  (make-array size
+              :element-type (array-element-type source)
+              :displaced-to source
+              :displaced-index-offset offset))
+
+(defun adjust-window (window &key (size 0 sp) (offset 0 op))
+  (multiple-value-bind (source %offset) (array-displacement window)
+    (assert source)
+    (adjust-array window
+                  (if sp size (length window))
+                  :element-type (array-element-type source)
+                  :displaced-to source
+                  :displaced-index-offset (if op offset %offset))))
