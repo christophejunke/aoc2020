@@ -6,6 +6,7 @@
            #:adjust-window
            #:make-buffer
            #:buffer-push
+           #:with-buffer
            #:run-length-encoding))
 
 (in-package aoc2020.utils)
@@ -50,6 +51,14 @@
 (defun buffer-push (buffer value)
   (vector-push-extend value buffer (array-total-size buffer)))
 
+(defmacro with-buffer ((b &rest make-buffer-args) &body body)
+  (with-gensyms (v)
+    `(let ((,b (make-buffer ,@make-buffer-args)))
+       (prog1 ,b
+         (flet ((,b (,v) (buffer-push ,b ,v)))
+           (declare (inline ,b))
+           ,@body)))))
+
 (defun make-window (source &key (size 0) (offset 0))
   (make-array size
               :element-type (array-element-type source)
@@ -66,18 +75,19 @@
                   :displaced-index-offset (if op offset %offset))))
 
 (defun run-length-encoding (seq &key (test #'eql))
-  (let ((sentinel (gensym)))
-    (let ((last sentinel) (last-count 0) stack)
-      (flet ((visit (node)
-               (cond
-                 ((or (eq last sentinel)
-                      (eq node sentinel)
-                      (not (funcall test last node)))
-                  (when (plusp last-count)
-                    (push (cons last-count last) stack))
-                  (setf last node)
-                  (setf last-count 1))
-                 (t (incf last-count)))))
-        (map () #'visit seq)
-        (visit sentinel)
-        (nreverse stack)))))
+  (with-buffer (buffer)
+    (let ((sentinel (vector)))
+      (declare (dynamic-extent sentinel))
+      (let ((last sentinel) (last-count 0))
+        (flet ((visit (node)
+                 (cond
+                   ((or (eq last sentinel)
+                        (eq node sentinel)
+                        (not (funcall test last node)))
+                    (when (plusp last-count)
+                      (buffer (cons last-count last)))
+                    (setf last node)
+                    (setf last-count 1))
+                   (t (incf last-count)))))
+          (map () #'visit seq)
+          (visit sentinel))))))

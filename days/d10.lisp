@@ -8,16 +8,17 @@
   (sort (z:collect 'list (z:scan-file (fetch-input 10))) #'<))
 
 (defun diffs ()
-  (nconc (loop
-           for last = 0 then jolt
-           for jolt in (input)
-           collect (- jolt last))
-         (list 3)))
+  (with-buffer (buffer)
+    (loop
+      :for last := 0 :then jolt
+      :for jolt :in (input)
+      :do (buffer (- jolt last))
+      :finally (buffer 3))))
 
 (defun part-1 (&optional (rle (run-length-encoding (diffs))))
   (loop
     with c = (vector 0 0 0 0 0)
-    for (n . diff) in rle
+    for (n . diff) across rle
     do (incf (aref c diff) n)
     finally (return (* (aref c 1) (aref c 3)))))
 
