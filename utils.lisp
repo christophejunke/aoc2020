@@ -5,7 +5,8 @@
            #:make-window
            #:adjust-window
            #:make-buffer
-           #:buffer-push))
+           #:buffer-push
+           #:run-length-encoding))
 
 (in-package aoc2020.utils)
 
@@ -63,3 +64,20 @@
                   :element-type (array-element-type source)
                   :displaced-to source
                   :displaced-index-offset (if op offset %offset))))
+
+(defun run-length-encoding (seq &key (test #'eql))
+  (let ((sentinel (gensym)))
+    (let ((last sentinel) (last-count 0) stack)
+      (flet ((visit (node)
+               (cond
+                 ((or (eq last sentinel)
+                      (eq node sentinel)
+                      (not (funcall test last node)))
+                  (when (plusp last-count)
+                    (push (cons last-count last) stack))
+                  (setf last node)
+                  (setf last-count 1))
+                 (t (incf last-count)))))
+        (map () #'visit seq)
+        (visit sentinel)
+        (nreverse stack)))))
