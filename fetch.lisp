@@ -69,7 +69,7 @@
       (when warnp
         (warn "File already exists: ~a" path)))))
 
-(defun fetch-input (day &optional (warnp t))
+(defun fetch-input (day &optional (warnp nil))
   (let ((path (input-pathname day)))
     (prog1 path
       (unless (check-if-file-exists/warn path warnp)
