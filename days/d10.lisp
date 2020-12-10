@@ -14,12 +14,29 @@
            collect (- jolt last))
          (list 3)))
 
-(defun part-1 ()
+(defun part-1 (&optional (rle (run-length-encoding (diffs))))
   (loop
     with c = (vector 0 0 0 0 0)
-    for (n . diff) in (run-length-encoding (diffs))
+    for (n . diff) in rle
     do (incf (aref c diff) n)
     finally (return (* (aref c 1) (aref c 3)))))
 
+;; https://twitter.com/Jas_Hughes/status/1336923190602297344?s=20
+(defun part-2 (&optional (rle (run-length-encoding (diffs))))
+  (reduce (lambda (product rle)
+            (destructuring-bind (n . diff) rle
+              (case diff
+                (1 (* product (case n
+                                (4 7)
+                                (3 4)
+                                (2 2)
+                                (1 1))))
+                (2 (error "unexpected"))
+                (3 product))))
+          rle
+          :initial-value 1))
+
 (define-test test ()
-  (assert (= 2176 (part-1))))
+  (let ((rle (run-length-encoding (diffs))))
+    (assert (= (part-1 rle) 2176))
+    (assert (= (part-2 rle) 18512297918464))))
