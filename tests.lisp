@@ -72,15 +72,14 @@
             (setf (get symbol 'dirty) nil))))
     (values pass res)))
 
-(defvar *test-lock* (bt:make-lock "aoc-tests"))
-
 (defun test-all (&key
                  (force nil)
                  (time nil)
                  (packages (aoc-packages))
                  (result-cb #'format-result))
-  (bt:with-lock-held (*test-lock*)
-    (flet ((test () (%test-all-in-packages packages force)))
-      (multiple-value-bind (pass res) (if time (time (test)) (test))
-        (values pass (funcall result-cb res))))))
+  (let ((lock (load-time-value (bt:make-lock))))
+    (bt:with-lock-held (lock)
+      (flet ((test () (%test-all-in-packages packages force)))
+        (multiple-value-bind (pass res) (if time (time (test)) (test))
+          (values pass (funcall result-cb res)))))))
 
