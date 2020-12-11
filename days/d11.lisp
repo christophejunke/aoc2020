@@ -34,6 +34,8 @@
 
 (declaim (inline %transform-seat))
 
+;; TODO: propagate the CHANGE to neighbours? to detect if a *region* reached a fixpoint?
+
 (defun %transform-seat (g y x neighbour-mapper eo-limit oe-limit)
   ;; neighbour-mapper: visit all the values surrounding a cell in a grid according to some definition.
   ;; eo-limit: empty-to-occupied limit
