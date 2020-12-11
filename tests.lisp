@@ -45,39 +45,36 @@
                             e)))
              (map () #'fmt snames pnames errors))))))
 
-(defun test-all-in-packages (packages &optional (force nil))
+(defun %test-all-in-packages (packages &optional (force nil))
   (let ((packages (ensure-list packages))
         (channel (make-channel))
         (res)
         (pass t)
         (submitted 0))
-    (time
-     (progn
-       (dolist (package packages pass)
-         (do-external-symbols (symbol package)
-           (when-let ((function (and (get symbol 'test)
-                                     (fboundp symbol)
-                                     (symbol-function symbol))))
-             (when (or force (get symbol 'dirty))
-               (submit-task channel
-                            #'unit-test
-                            (incf submitted)
-                            symbol
-                            function)))))
-       (do-fast-receives (result channel submitted)
-         (push result res)
-         (destructuring-bind (i s e) result
-           (declare (ignore i))
-           (if e
-               (setf pass nil)
-               (setf (get s 'dirty) nil))))))
+    (dolist (package packages pass)
+      (do-external-symbols (symbol package)
+        (when-let ((function (and (get symbol 'test)
+                                  (fboundp symbol)
+                                  (symbol-function symbol))))
+          (when (or force (get symbol 'dirty))
+            (submit-task channel
+                         #'unit-test
+                         (incf submitted)
+                         symbol
+                         function)))))
+    (do-fast-receives (result channel submitted)
+      (push result res)
+      (destructuring-bind (i s e) result
+        (declare (ignore i))
+        (if e
+            (setf pass nil)
+            (setf (get s 'dirty) nil))))
     (values pass res)))
 
 (defvar *test-lock* (bt:make-lock "aoc-tests"))
 
-(defun test-all (&optional (force nil))
+(defun test-all (&key (force nil) (packages (aoc-packages)))
   (bt:with-lock-held (*test-lock*)
-    (multiple-value-bind (ok res) (test-all-in-packages (aoc-packages) force)
-      (prog1 ok
-        (format-result res)))))
+    (multiple-value-bind (ok res) (time (%test-all-in-packages packages force))
+      (prog1 ok (format-result res)))))
 
