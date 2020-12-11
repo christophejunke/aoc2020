@@ -73,8 +73,11 @@
 
 (defvar *test-lock* (bt:make-lock "aoc-tests"))
 
-(defun test-all (&key (force nil) (packages (aoc-packages)))
+(defun test-all (&key
+                 (force nil)
+                 (packages (aoc-packages))
+                 (result-cb #'format-result))
   (bt:with-lock-held (*test-lock*)
     (multiple-value-bind (ok res) (time (%test-all-in-packages packages force))
-      (prog1 ok (format-result res)))))
+      (values ok (funcall result-cb res)))))
 
