@@ -19,10 +19,9 @@
 ;;; puzzle helpers
 
 (defun map-far-neighbours (f g y x)
-  (dolist (dy '(-1 0 1))
-    (dolist (dx '(-1 0 1))
-      (unless (= dx dy 0)
-        (let ((xx x) (yy y))
+  (loop
+    :for (dx dy) :in *neighbour-offsets*
+    :do (let ((xx x) (yy y))
           (loop
             (incf xx dx)
             (incf yy dy)
@@ -31,36 +30,36 @@
             (let ((cell (aref g yy xx)))
               (unless (eq 'floor cell)
                 (funcall f cell)
-                (return)))))))))
+                (return)))))))
 
-(defun at-least-n-occupied-neighbours (n neighbour-mapper grid y x &aux (c 0))
-  (block nil
-    (funcall neighbour-mapper
-             (lambda (v)
-               (when (eq v 'occupied)
-                 (when (>= (incf c) n)
-                   (return t))))
-             grid y x)
-    nil))
+(declaim (inline %transform-seat))
 
-(declaim (inline transform-seat))
-
-(defun transform-seat (grid y x nfn empty-if)
-  (let ((seat (aref grid y x)))
-    (or (case seat
-          (empty
-           (unless (at-least-n-occupied-neighbours 1 nfn grid y x)
-             (notify-change 'occupied)))
-          (occupied
-           (when (at-least-n-occupied-neighbours empty-if nfn grid y x)
-             (notify-change 'empty))))
-        seat)))
+(defun %transform-seat (g y x neighbour-mapper eo-limit oe-limit)
+  ;; neighbour-mapper: visit all the values surrounding a cell in a grid according to some definition.
+  ;; eo-limit: empty-to-occupied limit
+  ;; oe-limit: occupied-to-empty limit
+  (flet ((at-least-n-occupied-neighbours (n)
+           (prog ()
+              (funcall neighbour-mapper
+                       (let ((c 0))
+                         (lambda (v)
+                           (when (eq v 'occupied)
+                             (when (>= (incf c) n)
+                               (return t)))))
+                       g y x))))
+    (let ((seat (aref g y x)))
+      (or (case seat
+            (empty (unless (at-least-n-occupied-neighbours eo-limit)
+                     (notify-change 'occupied)))
+            (occupied (when (at-least-n-occupied-neighbours oe-limit)
+                        (notify-change 'empty))))
+          seat))))
 
 (defun transform-seat-1 (grid y x)
-  (transform-seat grid y x #'map-neighbours 4))
+  (%transform-seat grid y x #'map-neighbours 1 4))
 
 (defun transform-seat-2 (grid y x)
-  (transform-seat grid y x #'map-far-neighbours 5))
+  (%transform-seat grid y x #'map-far-neighbours 1 5))
 
 (defun occupiedp (grid y x)
   (eq (aref grid y x) 'occupied))

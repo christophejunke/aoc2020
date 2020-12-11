@@ -16,6 +16,7 @@
            #:read-grid
            #:map-grid-into
            #:fold-grid
+           #:*neighbour-offsets*
            #:map-neighbours
            #:define-test
            #:test-all

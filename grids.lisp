@@ -48,3 +48,7 @@
           (when (array-in-bounds-p g y x)
             (funcall f (aref g y x))))))))
 
+(defvar *neighbour-offsets*
+  '((+1 +1)(+0 +1)(-1 +1)
+    (+1 +0)       (-1 +0)
+    (+1 -1)(+0 -1)(-1 -1)))
