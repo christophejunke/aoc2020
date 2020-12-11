@@ -75,9 +75,11 @@
 
 (defun test-all (&key
                  (force nil)
+                 (time nil)
                  (packages (aoc-packages))
                  (result-cb #'format-result))
   (bt:with-lock-held (*test-lock*)
-    (multiple-value-bind (ok res) (time (%test-all-in-packages packages force))
-      (values ok (funcall result-cb res)))))
+    (flet ((test () (%test-all-in-packages packages force)))
+      (multiple-value-bind (pass res) (if time (time (test)) (test))
+        (values pass (funcall result-cb res))))))
 
