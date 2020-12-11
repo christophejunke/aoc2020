@@ -24,35 +24,26 @@
         (make-kernel 25 :name "aoc2020"
                         :bindings nil)))
 
-(defun symname (symbol)
-  (if (string= symbol "TEST")
-      ""
-      (format nil " > ~a" symbol)))
-
 (defun format-result (res)
   (with-standard-io-syntax
     (let ((*print-right-margin* most-positive-fixnum))
       (loop
-        for (i s e) in (sort res #'> :key #'car)
-        for sn = (symname s)
-        for pn = (package-name (symbol-package s))
-        collect sn into snames
-        collect pn into pnames
+        for (s e) in (mapcar #'cdr (sort res #'> :key #'car))
+        for n = (if (string= s "TEST") "" (format nil " > ~a" s))
+        for p = (package-name (symbol-package s))
+        collect n into snames
+        collect p into pnames
         collect e into errors
-        maximize (length (symname s))
-        into max-s
-        maximize (length pn)
-        into max-p
+        maximize (length n) into max-s
+        maximize (length p) into max-p
         finally
-           (loop
-             for s in snames
-             for p in pnames
-             for e in errors
-             do (format *trace-output*
-                        "~&> ~va~va~:[~; > ~:*~a~]~%"
-                        max-p p
-                        max-s s
-                        e))))))
+           (flet ((fmt (s p e)
+                    (format *trace-output*
+                            "~&> ~va~va~:[~; > ~:*~a~]~%"
+                            max-p p
+                            max-s s
+                            e)))
+             (map () #'fmt snames pnames errors))))))
 
 (defun test-all-in-packages (packages &optional (force nil))
   (let ((packages (ensure-list packages))
