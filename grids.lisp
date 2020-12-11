@@ -40,13 +40,14 @@
       (dotimes (x cols)
         (setf accumulator (funcall fold-fn accumulator grid y x))))))
 
+(defvar *neighbour-offsets*
+  '((-1 -1)(+0 -1)(+1 -1)
+    (-1 +0)       (+1 +0)
+    (-1 +1)(+0 +1)(+1 +1)))
+
 (defun map-neighbours (f g y x &key (offsets *neighbour-offsets*))
   (loop :for (dx dy) :in offsets
         :do (let ((x (+ x dx)) (y (+ y dy)))
              (when (array-in-bounds-p g y x)
                (funcall f (aref g y x))))))
 
-(defvar *neighbour-offsets*
-  '((-1 -1)(+0 -1)(+1 -1)
-    (-1 +0)       (+1 +0)
-    (-1 +1)(+0 +1)(+1 +1)))
