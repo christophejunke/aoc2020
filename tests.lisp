@@ -71,12 +71,13 @@
            (if e
                (setf pass nil)
                (setf (get s 'dirty) nil))))))
-    (prog1 pass
-      (format-result res))))
+    (values pass res)))
 
 (defvar *test-lock* (bt:make-lock "aoc-tests"))
 
 (defun test-all (&optional (force nil))
   (bt:with-lock-held (*test-lock*)
-    (test-all-in-packages (aoc-packages) force)))
+    (multiple-value-bind (ok res) (test-all-in-packages (aoc-packages) force)
+      (prog1 ok
+        (format-result res)))))
 
