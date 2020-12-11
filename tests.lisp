@@ -64,11 +64,12 @@
                          function)))))
     (do-fast-receives (result channel submitted)
       (push result res)
-      (destructuring-bind (i s e) result
-        (declare (ignore i))
-        (if e
+      (destructuring-bind (symbol error) (rest result)
+        (if error
+            ;; some error
             (setf pass nil)
-            (setf (get s 'dirty) nil))))
+            ;; do not test it until it is redefined
+            (setf (get symbol 'dirty) nil))))
     (values pass res)))
 
 (defvar *test-lock* (bt:make-lock "aoc-tests"))
