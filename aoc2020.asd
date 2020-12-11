@@ -3,15 +3,19 @@
   :serial nil
   :components ((:file "utils")
                (:file "fetch")
-               (:file "package" :depends-on ("utils"))
-               (:file "setup" :depends-on ("utils" "fetch" "package"))
-               (:file "inputs" :depends-on ("setup"))
-               (:file "lexer" :depends-on ("setup"))
-               (:file "scanner" :depends-on ("lexer"))
-               (:file "tests" :depends-on ("scanner"))
+               (:file "package" :depends-on ("utils" "fetch"))
+               (:module #:PARSING
+                :depends-on ("package")
+                :pathname ""
+                :serial t
+                :components ((:file "lexer")
+                             (:file "scanner")))
+               (:file "inputs" :depends-on ("package"))
+               (:file "tests" :depends-on ("package"))
                (:file "grids" :depends-on ("package"))
+               (:file "setup" :depends-on ("package" "tests"))
                (:module #:DAYS
-                :depends-on ("tests" "inputs")
+                :depends-on ("setup" "inputs" #:parsing "grids")
                 :pathname "days"
                 :serial nil
                 :components ((:file "d00")

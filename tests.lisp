@@ -1,13 +1,5 @@
 (in-package :aoc2020)
 
-(defun aoc-package (day)
-  (find-package (format nil "AOC2020.~2,'0d" day)))
-
-(defun aoc-packages ()
-  (loop
-    for day from 25 downto 0
-    collect (aoc-package day)))
-
 (defmacro define-test (name &body body)
   `(progn
      (defun ,name ()
@@ -18,11 +10,6 @@
 
 (defun unit-test (i s f)
   (list i s (nth-value 1 (ignore-errors (funcall f)))))
-
-(unless *kernel*
-  (setf *kernel*
-        (make-kernel 25 :name "aoc2020"
-                        :bindings nil)))
 
 (defun format-result (res)
   (with-standard-io-syntax
@@ -71,6 +58,16 @@
             ;; do not test it until it is redefined
             (setf (get symbol 'dirty) nil))))
     (values pass res)))
+
+;; AoC specific code
+
+(defun aoc-package (day)
+  (find-package (format nil "AOC2020.~2,'0d" day)))
+
+(defun aoc-packages ()
+  (loop
+    for day from 25 downto 0
+    collect (aoc-package day)))
 
 (defun test-all (&key
                  (force nil)
