@@ -45,14 +45,14 @@
 
 (declaim (inline transform-seat))
 
-(defun transform-seat (grid y x nfn min-empty)
+(defun transform-seat (grid y x nfn empty-if)
   (let ((seat (aref grid y x)))
     (or (case seat
           (empty
            (unless (at-least-n-occupied-neighbours 1 nfn grid y x)
              (notify-change 'occupied)))
           (occupied
-           (when (at-least-n-occupied-neighbours min-empty nfn grid y x)
+           (when (at-least-n-occupied-neighbours empty-if nfn grid y x)
              (notify-change 'empty))))
         seat)))
 
