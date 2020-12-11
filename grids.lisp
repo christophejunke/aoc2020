@@ -25,3 +25,26 @@
     :finally (return (make-array (list height width)
                                  :element-type element-type
                                  :displaced-to grid))))
+
+(defun map-grid-into (target function source)
+  (let ((target (or target (copy-array source))))
+    (prog1 target
+      (destructuring-bind (rows cols) (array-dimensions source)
+        (dotimes (y rows)
+          (dotimes (x cols)
+            (setf (aref target y x) (funcall function source y x))))))))
+
+(defun fold-grid (grid fold-fn accumulator)
+  (destructuring-bind (rows cols) (array-dimensions grid)
+    (dotimes (y rows accumulator)
+      (dotimes (x cols)
+        (setf accumulator (funcall fold-fn accumulator grid y x))))))
+
+(defun map-neighbours (f g y x)
+  (dolist (dy '(-1 0 1))
+    (dolist (dx '(-1 0 1))
+      (unless (= dx dy 0)
+        (let ((x (+ x dx)) (y (+ y dy)))
+          (when (array-in-bounds-p g y x)
+            (funcall f (aref g y x))))))))
+

@@ -14,6 +14,9 @@
            #:scanner-bind
            #:scan-as-values
            #:read-grid
+           #:map-grid-into
+           #:fold-grid
+           #:map-neighbours
            #:define-test
            #:test-all
            .
