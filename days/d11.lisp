@@ -1,6 +1,7 @@
 (defpackage :aoc2020.11
   (:use :aoc2020)
-  (:export #:test))
+  (:export #:test
+           #:demo))
 
 (in-package :aoc2020.11)
 
@@ -90,11 +91,14 @@
         (return input))
       (rotatef input output))))
 
+(define-condition grid () ((grid :initarg :grid :accessor grid-of)))
+
 (defun update-fixpoint/fresh-copy (transform-seat input)
   (loop
     :for p = nil :then g
     :for g = input :then (update transform-seat g)
     :while g
+    :do (signal 'grid :grid g)
     :finally (return p)))
 
 (defun update-fixpoint (transform-seat input &optional destructive)
@@ -119,6 +123,77 @@
 (defun grid (file)
   (with-input (in file)
     (read-grid in :transform #'tile)))
+
+(defparameter *colors*
+  '((floor    0.1 0.1 0.5 1.0)
+    (backg    . occupied)
+    (empty    0.5 0.5 0.9 1.0)
+    (occupied 0.75 0.3 0.75 1.0)))
+
+(defun color (c)
+  (when-let (v (cdr (assoc c *colors*)))
+    (if (symbolp v)
+        (color v)
+        v)))
+
+(defun show-grid (window rows cols grid)
+  (apply #'gl:clear-color (color 'backg))
+  (gl:clear :color-buffer)
+  (dotimes (y rows)
+    (dotimes (x cols)
+      (let ((cell (aref grid y x)))
+        (apply #'gl:color (color cell))
+        (gl:rect x y (1+ x) (1+ y)))))
+  (gl:flush)
+  (sdl2:gl-swap-window window))
+
+(defun viz (&key (transform 'transform-seat-1)
+                 (sleep/s 1.0)
+                 (in "11-sample")
+                 (scale 16)
+                 (margin 5))
+  (let ((grid (grid in))
+        (title (format nil
+                       "in=~a scale=~d transform=~a"
+                       in
+                       scale
+                       transform)))
+    (destructuring-bind (rows cols) (array-dimensions grid)
+      (flet ((scale (x) (* x scale)))
+        (let* ((sleep/ms (round (* sleep/s 1000)))
+               (width (scale (+ cols margin margin)))
+               (height (scale (+ rows margin margin))))
+          (sdl2:with-everything (:window
+                                 (w :title title
+                                    :w width
+                                    :h height)
+                                 :gl gl)
+            (labels
+                ((show () (show-grid w rows cols grid))
+                 (display (c)
+                   (setf grid (grid-of c))
+                   (sdl2:gl-make-current w gl)
+                   (gl:matrix-mode :projection)
+                   (gl:load-identity)
+                   (gl:ortho (- margin)
+                             (+ cols margin)
+                             (+ rows margin)
+                             (- margin)
+                             0 1)
+                   (show)
+                   (bricabrac.sdl2.event-loop:do-match-events
+                       (:method :wait :timeout sleep/ms)
+                     (:idle (return))
+                     (:quit (throw :stop nil)))))
+              (catch :stop
+                (handler-bind ((grid #'display))
+                  (update-fixpoint transform grid nil))
+                (bricabrac.sdl2.event-loop:do-match-events ()
+                  (:quit (return)))))))))))
+
+(defun demo ()
+  (viz :transform 'transform-seat-1 :sleep/s 0.03 :in 11 :scale 4)
+  (viz :transform 'transform-seat-2 :sleep/s 0.03 :in 11 :scale 4))
 
 ;;  approx. 0.6 seconds of real time
 (define-test test

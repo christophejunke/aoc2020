@@ -1,5 +1,5 @@
 (defsystem :aoc2020
-  :depends-on (:aoc2020.requirements)
+  :depends-on (:aoc2020.requirements :sdl2 :cl-opengl :bricabrac)
   :serial nil
   :components ((:file "utils")
                (:file "fetch")
