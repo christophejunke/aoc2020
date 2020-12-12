@@ -19,9 +19,11 @@
 (define-constant +left+  #C(+0 +1))
 (define-constant +right+ #C(+0 -1))
 
+(defvar *mov*)
+
 (defun parse-line (line)
   (scanner-bind ("%c%d" c n) line
-    (flet ((mov (v) (list 'mov (* v n)))
+    (flet ((mov (v) (list *mov* (* v n)))
            (rot (v) (list 'rot (expt v (/ n 90))))
            (fwd (v) (list 'fwd v)))
       (case c
@@ -38,28 +40,15 @@
 
 (defstruct ship (dir +east+) (pos 0))
 
-(defmacro define-update (name (pos dir val) &body clauses)
-  (assert (equalp '(fwd mov rot) (sort (mapcar #'car clauses) #'string<))
-          ()
-          "clauses should exactly cover FWD ROT and MOV")
-  (with-gensyms (ship command cmd)
-    `(defun ,name (,ship ,command)
-       (prog1 ,ship
-         (with-accessors ((,dir ship-dir) (,pos ship-pos)) ,ship
-           (destructuring-bind (,cmd &optional ,val) ,command
-             (ecase ,cmd
-               ,@clauses)))))))
-
-(define-update up1 (pos dir val)
-  (fwd (incf pos (* dir val)))
-  (rot (setf dir (* dir val)))
-  (mov (incf pos val)))
-
-;; the waypoint is in fact the ship's DIR slot
-(define-update up2 (pos wpt val)
-  (fwd (incf pos (* wpt val)))
-  (rot (setf wpt (* wpt val)))
-  (mov (incf wpt val)))
+(defun update (ship command)
+  (prog1 ship
+    (with-accessors ((dir ship-dir) (pos ship-pos)) ship
+      (destructuring-bind (cmd &optional val) command
+        (ecase cmd
+          (fwd (incf pos (* dir val)))
+          (rot (setf dir (* dir val)))
+          (mv1 (incf pos val))
+          (mv2 (incf dir val)))))))
 
 ;; solve
 
@@ -70,11 +59,11 @@
 (defun navigate (updater in ship)
   (manhattan (ship-pos (reduce updater (input in) :initial-value ship))))
 
-(defun part-1 (&optional (in 12))
-  (navigate #'up1 in (make-ship)))
+(defun part-1 (&optional (in 12) &aux (*mov* 'mv1))
+  (navigate #'update in (make-ship)))
 
-(defun part-2 (&optional (in 12))
-  (navigate #'up2 in (make-ship :dir #C(10 1))))
+(defun part-2 (&optional (in 12) &aux (*mov* 'mv2))
+  (navigate #'update in (make-ship :dir #C(10 1))))
 
 (define-test test
   (assert (= (part-1 #P"12-sample") 25))
