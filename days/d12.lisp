@@ -22,7 +22,7 @@
 (defun parse-line (line)
   (scanner-bind ("%c%d" c n) line
     (flet ((mov (v) (list 'mov (* v n)))
-           (rot (v) (list 'rot v))
+           (rot (v) (list 'rot (expt v (/ n 90))))
            (fwd (v) (list 'fwd v)))
       (case c
         (#\N (mov +north+))
@@ -45,15 +45,19 @@
      (abs (imagpart complex))))
 
 (defun update (ship command)
-  (with-accessors ((dir ship-dir) (pos ship-pos)) ship
-    (destructuring-bind (cmd &optional val) command
-      (case cmd
-        (fwd (incf pos (* dir val)))
-        (rot (setf dir (* dir val)))
-        (mov (incf pos val))))))
+  (prog1 ship
+    (with-accessors ((dir ship-dir) (pos ship-pos)) ship
+      (destructuring-bind (cmd &optional val) command
+        (case cmd
+          (fwd (incf pos (* dir val)))
+          (rot (setf dir (* dir val)))
+          (mov (incf pos val)))))))
 
-(define-test example
-  (let ((ship (make-ship))
-        (commands (input "12-sample")))
-    (map () (curry #'update ship) commands)
-    (assert (= (manhattan (ship-pos ship)) 25))))
+(defun part-1 (&optional (in 12))
+  (manhattan
+   (ship-pos
+    (reduce #'update (input in) :initial-value (make-ship)))))
+
+(define-test test
+  (assert (= (part-1 #P"12-sample") 25))
+  (assert (= (part-1) 415)))
