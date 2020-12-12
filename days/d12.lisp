@@ -11,27 +11,28 @@
 ;; |
 ;; |____> E  #C(1 0)
 
-(define-constant +east+  #C(+1 +0))
-(define-constant +west+  #C(-1 +0))
-(define-constant +north+ #C(+0 +1))
-(define-constant +south+ #C(+0 -1))
+(defmacro move (&rest args)
+  `(list 'mov (compass ,@args)))
 
-(define-constant +left+  #C(+0 +1))
-(define-constant +right+ #C(+0 -1))
+(defmacro compass (&key (east 0) (north 0) (south 0) (west 0))
+  `(complex (- ,east ,west) (- ,north ,south)))
+
+(defmacro turn (&key (left 0) (right 0))
+  `(list 'rot (expt #C(0 1) (/ (- ,left ,right) 90))))
+
+(defmacro forward (n)
+  `(list 'fwd ,n))
 
 (defun parse-line (line)
   (scanner-bind ("%c%d" c n) line
-    (flet ((mov (v) (list 'mov (* v n)))
-           (rot (v) (list 'rot (expt v (/ n 90))))
-           (fwd (v) (list 'fwd v)))
-      (case c
-        (#\N (mov +north+))
-        (#\S (mov +south+))
-        (#\E (mov +east+))
-        (#\W (mov +west+))
-        (#\L (rot +left+))
-        (#\R (rot +right+))
-        (#\F (fwd n))))))
+    (case c
+      (#\N (move :north n))
+      (#\S (move :south n))
+      (#\E (move :east n))
+      (#\W (move :west n))
+      (#\L (turn :left n))
+      (#\R (turn :right n))
+      (#\F (forward n)))))
 
 (defun input (&optional (in 12))
   (map-input in :transform #'parse-line))
@@ -71,10 +72,10 @@
   (manhattan (ship-pos (reduce updater (input in) :initial-value ship))))
 
 (defun part-1 (&optional (in 12))
-  (navigate #'up1 in (make-ship)))
+  (navigate #'up1 in (make-ship :dir (compass :east 1))))
 
 (defun part-2 (&optional (in 12))
-  (navigate #'up2 in (make-ship :dir #C(10 1))))
+  (navigate #'up2 in (make-ship :dir (compass :north 1 :east 10))))
 
 (define-test test
   (assert (= (part-1 #P"12-sample") 25))
