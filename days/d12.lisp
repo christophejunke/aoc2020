@@ -4,18 +4,6 @@
 
 (in-package :aoc2020.12)
 
-(defmacro define-update (name (pos dir val) &body clauses)
-  (assert (equalp '(fwd mov rot) (sort (mapcar #'car clauses) #'string<))
-          ()
-          "clauses should exactly cover FWD ROT and MOV")
-  (with-gensyms (ship command cmd)
-    `(defun ,name (,ship ,command)
-       (prog1 ,ship
-         (with-accessors ((,dir ship-dir) (,pos ship-pos)) ,ship
-           (destructuring-bind (,cmd &optional ,val) ,command
-             (ecase ,cmd
-               ,@clauses)))))))
-
 ;; #C(0 1)
 ;;
 ;; N
@@ -52,9 +40,17 @@
 
 (defstruct ship (dir +east+) (pos 0))
 
-(defun manhattan (complex)
-  (+ (abs (realpart complex))
-     (abs (imagpart complex))))
+(defmacro define-update (name (pos dir val) &body clauses)
+  (assert (equalp '(fwd mov rot) (sort (mapcar #'car clauses) #'string<))
+          ()
+          "clauses should exactly cover FWD ROT and MOV")
+  (with-gensyms (ship command cmd)
+    `(defun ,name (,ship ,command)
+       (prog1 ,ship
+         (with-accessors ((,dir ship-dir) (,pos ship-pos)) ,ship
+           (destructuring-bind (,cmd &optional ,val) ,command
+             (ecase ,cmd
+               ,@clauses)))))))
 
 (define-update up1 (pos dir val)
   (fwd (incf pos (* dir val)))
@@ -66,6 +62,12 @@
   (fwd (incf pos (* wpt val)))
   (rot (setf wpt (* wpt val)))
   (mov (incf wpt val)))
+
+;; solve
+
+(defun manhattan (complex)
+  (+ (abs (realpart complex))
+     (abs (imagpart complex))))
 
 (defun navigate (updater in ship)
   (manhattan (ship-pos (reduce updater (input in) :initial-value ship))))
