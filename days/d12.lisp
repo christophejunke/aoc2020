@@ -6,7 +6,10 @@
 
 (defstruct (ship (:conc-name)) dir (pos 0) move-waypoint-p)
 
-(defmacro defaction (name (pos dir move-dir) &body body)
+(defmacro define-action (name (dir &optional
+                               (pos (gensym))
+                               (move-dir (gensym)))
+                     &body body)
   (labels ((visit (term)
              (typecase term
                (cons (union (visit (car term))
@@ -27,15 +30,20 @@
                                         collect `(cons ',s ,s)))
                           ',body))))))))
 
-(defaction move (p d md)
-  (let ((v (complex (- :east :west) (- :north :south))))
-    (if md (incf d v) (incf p v))))
 
-(defaction forward (p d md)
-  (incf p (* d :units)))
 
-(defaction turn (p d md)
-  (setf d (* d (expt #C(0 1) (/ (- :left :right) 90)))))
+(define-action move (wpt pos move-waypoint)
+  (let ((vec (complex (- :east :west)
+                      (- :north :south))))
+    (if move-waypoint
+        (incf wpt vec)
+        (incf pos vec))))
+
+(define-action forward (dir pos)
+  (incf pos (* dir :units)))
+
+(define-action turn (dir)
+  (setf dir (* dir (expt #C(0 1) (/ (- :left :right) 90)))))
 
 (defun execute-line (line ships)
   (prog1 ships
