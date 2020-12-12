@@ -18,6 +18,7 @@
         for (s e) in (mapcar #'cdr (sort res #'> :key #'car))
         for n = (if (string= s "TEST") "" (format nil " > ~a" s))
         for p = (package-name (symbol-package s))
+        when e collect s into symbols
         collect n into snames
         collect p into pnames
         collect e into errors
@@ -30,7 +31,9 @@
                             max-p p
                             max-s s
                             e)))
-             (map () #'fmt snames pnames errors))))))
+             (map () #'fmt snames pnames errors)
+             (return
+               (and symbols (lambda () (map () #'funcall symbols)))))))))
 
 (defun %test-all-in-packages (packages &optional (force nil))
   (let ((packages (ensure-list packages))
