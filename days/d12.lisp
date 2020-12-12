@@ -4,81 +4,63 @@
 
 (in-package :aoc2020.12)
 
-;; #C(0 1)
-;;
-;; N
-;; ^
-;; |
-;; |____> E  #C(1 0)
+(defstruct (ship (:conc-name)) dir (pos 0) move-waypoint-p)
 
-(defmacro move (&rest args)
-  `(list 'mov (compass ,@args)))
+(defmacro defaction (name (pos dir move-dir) &body body)
+  (labels ((visit (term)
+             (typecase term
+               (cons (union (visit (car term))
+                            (visit (cdr term))))
+               (keyword (list term)))))
+    (let* ((args (mapcar (lambda (k) (list (list k (gensym)) 0)) (visit body)))
+           (body (sublis (loop for ((k s) v) in args
+                               collect (cons k s))
+                         body)))
+      (with-gensyms (ships s)
+        `(defmacro ,name (,ships &key ,@args)
+           `(dolist (,',s ,,ships)
+              (with-accessors ((,',dir dir)
+                               (,',pos pos)
+                               (,',move-dir move-waypoint-p)) ,',s
+                ,@(sublis ,(list* 'list
+                                  (loop for ((k s) v) in args
+                                        collect `(cons ',s ,s)))
+                          ',body))))))))
 
-(defmacro compass (&key (east 0) (north 0) (south 0) (west 0))
-  `(complex (- ,east ,west) (- ,north ,south)))
+(defaction move (p d md)
+  (let ((v (complex (- :east :west) (- :north :south))))
+    (if md (incf d v) (incf p v))))
 
-(defmacro turn (&key (left 0) (right 0))
-  `(list 'rot (expt #C(0 1) (/ (- ,left ,right) 90))))
+(defaction forward (p d md)
+  (incf p (* d :units)))
 
-(defmacro forward (n)
-  `(list 'fwd ,n))
+(defaction turn (p d md)
+  (setf d (* d (expt #C(0 1) (/ (- :left :right) 90)))))
 
-(defun parse-line (line)
-  (scanner-bind ("%c%d" c n) line
-    (case c
-      (#\N (move :north n))
-      (#\S (move :south n))
-      (#\E (move :east n))
-      (#\W (move :west n))
-      (#\L (turn :left n))
-      (#\R (turn :right n))
-      (#\F (forward n)))))
-
-(defun input (&optional (in 12))
-  (map-input in :transform #'parse-line))
-
-(defstruct ship (dir +east+) (pos 0))
-
-(defmacro define-update (name (pos dir val) &body clauses)
-  (assert (equalp '(fwd mov rot) (sort (mapcar #'car clauses) #'string<))
-          ()
-          "clauses should exactly cover FWD ROT and MOV")
-  (with-gensyms (ship command cmd)
-    `(defun ,name (,ship ,command)
-       (prog1 ,ship
-         (with-accessors ((,dir ship-dir) (,pos ship-pos)) ,ship
-           (destructuring-bind (,cmd &optional ,val) ,command
-             (ecase ,cmd
-               ,@clauses)))))))
-
-(define-update up1 (pos dir val)
-  (fwd (incf pos (* dir val)))
-  (rot (setf dir (* dir val)))
-  (mov (incf pos val)))
-
-;; the waypoint is in fact the ship's DIR slot
-(define-update up2 (pos wpt val)
-  (fwd (incf pos (* wpt val)))
-  (rot (setf wpt (* wpt val)))
-  (mov (incf wpt val)))
-
-;; solve
+(defun execute-line (line ships)
+  (prog1 ships
+    (let ((n (parse-integer line :start 1)))
+      (case (char line 0)
+        (#\N (move    ships :north n))
+        (#\S (move    ships :south n))
+        (#\E (move    ships :east n))
+        (#\W (move    ships :west n))
+        (#\L (turn    ships :left n))
+        (#\R (turn    ships :right n))
+        (#\F (forward ships :units n))))))
 
 (defun manhattan (complex)
   (+ (abs (realpart complex))
      (abs (imagpart complex))))
 
-(defun navigate (updater in ship)
-  (manhattan (ship-pos (reduce updater (input in) :initial-value ship))))
-
-(defun part-1 (&optional (in 12))
-  (navigate #'up1 in (make-ship :dir (compass :east 1))))
-
-(defun part-2 (&optional (in 12))
-  (navigate #'up2 in (make-ship :dir (compass :north 1 :east 10))))
+(defun navigate (input &rest ships)
+  (mapcar (compose #'manhattan #'ship-pos)
+          (fold-input-lines input #'execute-line ships)))
 
 (define-test test
-  (assert (= (part-1 #P"12-sample") 25))
-  (assert (= (part-2 #P"12-sample") 286))
-  (assert (= (part-1) 415))
-  (assert (= (part-2) 29401)))
+  (flet ((nav (input)
+           (navigate input
+                     (make-ship :move-waypoint-p () :dir 1)
+                     (make-ship :move-waypoint-p t  :dir #C(10 1)))))
+    (assert (equalp '(25 286) (nav "12-sample")))
+    (assert (equalp '(415 29401) (nav 12)))))
