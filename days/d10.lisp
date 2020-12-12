@@ -5,7 +5,7 @@
 (in-package :aoc2020.10)
 
 (defun input ()
-  (sort (z:collect 'list (z:scan-file (fetch-input 10))) #'<))
+  (sort (map-input 10 :reader #'read :type 'list) #'< ))
 
 (defun diffs ()
   (with-buffer (buffer)

@@ -10,7 +10,7 @@
                 :serial t
                 :components ((:file "lexer")
                              (:file "scanner")))
-               (:file "inputs" :depends-on ("package"))
+               (:file "inputs" :depends-on ("package" "setup"))
                (:file "tests" :depends-on ("package"))
                (:file "grids" :depends-on ("package"))
                (:file "setup" :depends-on ("package" "tests"))

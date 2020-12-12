@@ -12,6 +12,15 @@
              :do (progn ,@body)
              :finally (return ,result)))))
 
+(defmacro map-input (in &key (transform nil) (reader '#'read-line) (type ''vector))
+  (with-gensyms (s)
+    (let ((scanner `(z:scan-stream ,s ,reader)))
+      `(with-input (,s ,in)
+         (z:collect ,type
+           ,(if transform
+                `(z:map-fn t ,transform ,scanner)
+                scanner))))))
+
 (defun fold-input-lines (input function &optional accumulator)
   (do-input-lines (line input accumulator)
     (setf accumulator (funcall function line accumulator))))

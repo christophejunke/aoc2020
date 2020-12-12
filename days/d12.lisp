@@ -34,9 +34,7 @@
         (#\F (fwd n))))))
 
 (defun input (&optional (in 12))
-  (with-input (stream in)
-    (z:collect 'vector
-      (z:map-fn t #'parse-line (z:scan-stream stream #'read-line)))))
+  (map-input in :transform #'parse-line))
 
 (defstruct ship (dir +east+) (pos 0))
 
