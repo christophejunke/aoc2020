@@ -11,17 +11,17 @@
 ;; |
 ;; |____> E  #C(1 0)
 
-(defmacro move (&rest args)
-  `(list 'mov (compass ,@args)))
+(defun dir (&key (east 0) (north 0) (south 0) (west 0))
+  (complex (- east west) (- north south)))
 
-(defmacro compass (&key (east 0) (north 0) (south 0) (west 0))
-  `(complex (- ,east ,west) (- ,north ,south)))
+(defun forward (n)
+  (list 'fwd n))
 
-(defmacro turn (&key (left 0) (right 0))
-  `(list 'rot (expt #C(0 1) (/ (- ,left ,right) 90))))
+(defun move (&rest args)
+  (list 'mov (apply #'dir args)))
 
-(defmacro forward (n)
-  `(list 'fwd ,n))
+(defun turn (&key (left 0) (right 0))
+  (list 'rot (expt #C(0 1) (/ (- left right) 90))))
 
 (defun parse-line (line)
   (scanner-bind ("%c%d" c n) line
@@ -72,10 +72,10 @@
   (manhattan (ship-pos (reduce updater (input in) :initial-value ship))))
 
 (defun part-1 (&optional (in 12))
-  (navigate #'up1 in (make-ship :dir (compass :east 1))))
+  (navigate #'up1 in (make-ship :dir (dir :east 1))))
 
 (defun part-2 (&optional (in 12))
-  (navigate #'up2 in (make-ship :dir (compass :north 1 :east 10))))
+  (navigate #'up2 in (make-ship :dir (dir :north 1 :east 10))))
 
 (define-test test
   (assert (= (part-1 #P"12-sample") 25))
