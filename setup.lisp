@@ -1,9 +1,11 @@
 (in-package :aoc2020)
 
-(when-let ((package (find-package :series)))
-  (rename-package package "Z"))
+(defpackage :z
+  (:use :series)
+  (:export . #.(external-symbols :series)))
 
 (unless *kernel*
-  (setf *kernel* (make-kernel (length (aoc-packages))
-                              :name "aoc2020"
-                              :bindings nil)))
+  (setf *kernel*
+        (make-kernel (length (aoc-packages))
+                     :name "aoc2020"
+                     :bindings nil)))
