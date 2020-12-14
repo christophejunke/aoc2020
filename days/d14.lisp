@@ -25,9 +25,6 @@
     (flet ((decode (line) (or (parse-mask line) (parse-assignment line))))
       (map-input in :type 'list :transform #'decode))))
 
-(defun mask-1 (zeroes ones)
-  (lambda (v) (logior ones (logand zeroes v))))
-
 (defun part-1 (&optional (in 14))
   (loop
     with mem = (make-hash-table)
@@ -44,34 +41,31 @@
        (return
          (reduce #'+ (hash-table-values mem)))))
 
-(defun map-floating-bits (function value indices)
+(defun map-floating-bits (f v indices)
   (if indices
-      (let ((index (pop indices)))
-        (map-floating-bits function (dpb 0 (byte 1 index) value) indices)
-        (map-floating-bits function (dpb 1 (byte 1 index) value) indices))
-      (funcall function value)))
+      (let ((i (pop indices)))
+        (map-floating-bits f (dpb 0 (byte 1 i) v) indices)
+        (map-floating-bits f (dpb 1 (byte 1 i) v) indices))
+      (funcall f v)))
 
 (defun part-2 (&optional (in 14))
-  (let ((mem (make-hash-table)))
-    (flet ((store (a v)
-             (setf (gethash a mem) v)))
-      (loop
-        with mask-1 = 0 and mask-x = nil
-        for cmd in (input in)
-        do (ematch cmd
-             (`(mask ,_ ,i1 ,ix)
-               (setf mask-1 i1)
-               (setf mask-x
-                     (loop
-                       for index below (integer-length ix)
-                       when (logbitp index ix)
-                         collect index)))
-             (`(set ,a ,v)
-               (let ((address (logior mask-1 a)))
-                 (map-floating-bits (lambda (a) (store a v))
-                                    address
-                                    mask-x))))))
-    (reduce #'+ (hash-table-values mem))))
+  (loop
+    with mem = (make-hash-table)
+    with mask-1 = 0 and mask-x = nil
+    for cmd in (input in)
+    do (ematch cmd
+         (`(mask ,_ ,i1 ,ix)
+           (setf mask-1 i1)
+           (setf mask-x
+                 (loop
+                   for index below (integer-length ix)
+                   when (logbitp index ix) collect index)))
+         (`(set ,a ,v)
+           (let ((address (logior mask-1 a)))
+             (map-floating-bits (lambda (a) (setf (gethash a mem) v))
+                                address
+                                mask-x))))
+    finally (return (reduce #'+ (hash-table-values mem)))))
 
 (define-test test
   (assert (= 165 (part-1 "14-1")))
