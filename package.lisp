@@ -14,6 +14,7 @@
            #:decode-format
            #:scanner-bind
            #:scan-as-values
+           #:scan-as-list
            #:read-grid
            #:map-grid-into
            #:fold-grid

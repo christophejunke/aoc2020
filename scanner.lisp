@@ -22,8 +22,14 @@
   (multiple-value-bind (tree decoders) (decode-format format)
     (%scanner-body nil variables decoders body format tree input)))
 
-(defmacro scan-as-values (format input)
-  (multiple-value-bind (tree decoders) (decode-format format)
-    (let* ((variables (loop for _ in decoders collect (gensym)))
-           (body `((values ,@variables))))
-      (%scanner-body t variables decoders body format tree input))))
+(flet ((scan-expand (format input body-fn)
+         (multiple-value-bind (tree decoders) (decode-format format)
+           (let* ((variables (loop for _ in decoders collect (gensym)))
+                  (body (funcall body-fn variables)))
+             (%scanner-body t variables decoders body format tree input)))))
+
+  (defmacro scan-as-values (format input)
+    (scan-expand format input (lambda (v) `((values ,@v)))))
+
+  (defmacro scan-as-list (format input)
+    (scan-expand format input (lambda (v) `((list ,@v))))))
