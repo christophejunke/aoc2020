@@ -7,7 +7,8 @@
            #:make-buffer
            #:buffer-push
            #:with-buffer
-           #:run-length-encoding))
+           #:run-length-encoding
+           #:fold-hash-values))
 
 (in-package aoc2020.utils)
 
@@ -91,3 +92,8 @@
                    (t (incf last-count)))))
           (map () #'visit seq)
           (visit sentinel))))))
+
+(defun fold-hash-values (hash function accumulator)
+  (flet ((fold (v) (setf accumulator (funcall function accumulator v))))
+    (maphash-values #'fold hash)
+    accumulator))
