@@ -28,7 +28,7 @@
 (defun part-1 (&optional (in 14))
   (loop
     with mem = (make-hash-table)
-    and m0 = (dpb -1 (byte 36 0) 0)
+    and m0 = (mask-field (byte 36 0) -1)
     and m1 = 0
     for cmd in (input in)
     do (ematch cmd
