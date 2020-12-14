@@ -22,6 +22,7 @@
              (register-groups-bind ((#'direction direction)
                                     (#'parse-integer steps))
                  ('(:sequence letter int) line)
+               (check-type direction number)
                (+ position (* direction steps)))))
     (assert (= (fold-input-lines "00-fold" #'fold-line 0)
                #C(30 20)))))

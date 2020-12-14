@@ -27,7 +27,7 @@
   (reduce (lambda (product rle)
             (destructuring-bind (n . diff) rle
               (case diff
-                (1 (* product (case n
+                (1 (* product (ecase n
                                 (4 7)
                                 (3 4)
                                 (2 2)

@@ -37,7 +37,7 @@
 (defun input (&optional (in 12))
   (map-input in :transform #'parse-line))
 
-(defstruct ship (dir +east+) (pos 0))
+(defstruct ship dir (pos 0))
 
 (defmacro define-update (name (pos dir val) &body clauses)
   (assert (equalp '(fwd mov rot) (sort (mapcar #'car clauses) #'string<))

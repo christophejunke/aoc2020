@@ -100,10 +100,10 @@
       (update-fixpoint/double-buffering transform-seat input)
       (update-fixpoint/fresh-copy transform-seat input)))
 
-(defun part-1 (&optional (in (input)) (destructive t))
+(defun part-1 (&optional in (destructive t))
   (count-occupied (update-fixpoint #'transform-seat-1 in destructive)))
 
-(defun part-2 (&optional (in (input)) (destructive t))
+(defun part-2 (&optional in (destructive t))
   (count-occupied (update-fixpoint #'transform-seat-2 in destructive)))
 
 ;; parsing
