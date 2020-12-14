@@ -11,7 +11,6 @@
     (:sequence
      (:greedy-repetition ,d ,d :digit-class))))
 
-
 (define-parse-tree-synonym letter
     (:register :word-char-class))
 
@@ -21,6 +20,12 @@
       :word-boundary
       (:greedy-repetition 1 nil :word-char-class)
       :word-boundary)))
+
+(defun %word (d)
+  `(:register
+    (:sequence
+     :word-boundary
+     (:greedy-repetition 1 ,d :word-char-class))))
 
 (defun map-tokens (callback stream &key (sharedp nil) (debugp nil))
   (declare (type (function (t)) callback)
@@ -78,7 +83,7 @@
                    (case c
                      ((#\i #\d) (emit/dispatch :integer length-param))
                      (#\c (emit/dispatch :character))
-                     (#\s (emit/dispatch :word))
+                     (#\s (emit/dispatch :word length-param))
                      (t (cond
                           ((digit-char-p c)
                            (switch-to #'await-length-param c))
@@ -98,7 +103,8 @@
          (values 'int 'parse-integer)
          (values (%int d) `(lambda (s) (parse-integer s :end ,d)))))
     ((list :character)      (values 'letter 'first-elt))
-    ((list :word)           (values 'word   'identity))
+    ((list :word d)
+     (values (if (= d 0) 'word (%word d)) 'identity))
     ((list :literal string) string)))
 
 (defun decode-format (format)
