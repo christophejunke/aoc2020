@@ -10,7 +10,8 @@
   (flet ((b (tc) (map 'string (lambda (c) (if (char= c tc) #\1 #\0)) string)))
     `(mask
       ,(parse-integer (b #\0) :radix 2)
-      ,(parse-integer (b #\1) :radix 2))))
+      ,(parse-integer (b #\1) :radix 2)
+      ,(parse-integer (b #\X) :radix 2))))
 
 (defun parse-mask (line)
   (scanner-bind ("mask = %36s" b) line
@@ -33,8 +34,8 @@
     and m0 = (dpb -1 (byte 36 0) 0)
     and m1 = 0
     for cmd in (input in)
-    do (match cmd
-         (`(mask ,i0 ,i1)
+    do (ematch cmd
+         (`(mask ,i0 ,i1 ,_)
            (setf m0 i0 m1 i1))
          (`(set ,a ,v)
            (setf (gethash a mem)
@@ -43,6 +44,37 @@
        (return
          (reduce #'+ (hash-table-values mem)))))
 
+(defun map-floating-bits (function value indices)
+  (if indices
+      (let ((index (pop indices)))
+        (map-floating-bits function (dpb 0 (byte 1 index) value) indices)
+        (map-floating-bits function (dpb 1 (byte 1 index) value) indices))
+      (funcall function value)))
+
+(defun part-2 (&optional (in 14))
+  (let ((mem (make-hash-table)))
+    (flet ((store (a v)
+             (setf (gethash a mem) v)))
+      (loop
+        with mask-1 = 0 and mask-x = nil
+        for cmd in (input in)
+        do (ematch cmd
+             (`(mask ,_ ,i1 ,ix)
+               (setf mask-1 i1)
+               (setf mask-x
+                     (loop
+                       for index below (integer-length ix)
+                       when (logbitp index ix)
+                         collect index)))
+             (`(set ,a ,v)
+               (let ((address (logior mask-1 a)))
+                 (map-floating-bits (lambda (a) (store a v))
+                                    address
+                                    mask-x))))))
+    (reduce #'+ (hash-table-values mem))))
+
 (define-test test
-  (assert (= 165 (part-1 "14-sample")))
-  (assert (= 17028179706934 (part-1))))
+  (assert (= 165 (part-1 "14-1")))
+  (assert (= 208  (part-2 "14-2")))
+  (assert (= 17028179706934 (part-1)))
+  (assert (= 3683236147222 (part-2))))
