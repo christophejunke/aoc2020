@@ -7,16 +7,17 @@
 (defvar *input* '(15 12 0 14 3 1))
 
 (defun play-until (list target-turn)
-  (let ((env (z:collect-hash (z:scan 'list list)
-                             (z:scan-range :from 1)))
-        (turn (length list))
-        past-turn
-        last-spoken)
+  (declare (type fixnum target-turn))
+  (let* ((env (z:collect-hash (z:scan 'list list)
+                              (z:scan-range :from 1
+                                            :type 'fixnum)))
+         (turn (length list)) (past-turn turn) (last-spoken 0))
+    (declare (optimize (speed 3) (debug 0) (safety 1))
+             (type fixnum turn past-turn last-spoken))
     (loop
-      (let ((value (if past-turn (- turn past-turn) 0)))
-        (incf turn)
-        (shiftf past-turn (gethash value env) turn)
-        (setq last-spoken value))
+      (setf last-spoken (- turn past-turn))
+      (incf turn)
+      (shiftf past-turn (gethash last-spoken env turn) turn)
       (when (>= turn target-turn)
         (return last-spoken)))))
 
