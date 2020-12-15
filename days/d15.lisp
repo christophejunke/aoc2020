@@ -6,25 +6,31 @@
 
 (defvar *input* '(15 12 0 14 3 1))
 
-(defun make-env (list &optional (turn 1) result)
-  (if list
-      (make-env (rest list)
-                (1+ turn)
-                (acons (car list) turn result))
-      result))
+(defstruct (env (:constructor make-env%)) hash last turn)
 
-(defun value-turn (env value)
-  (cdr (assoc value env)))
+(defun make-env (list)
+  (loop
+    :with h = (make-hash-table)
+    :with last :and turn
+    :for v in list
+    :for i from 1
+    :do (setf last v)
+    :do (setf turn i)
+    :do (setf (gethash v h) (cons i nil))
+    :finally (return (make-env% :hash h :last last :turn turn))))
 
 (defun last-spoken-value (env)
-  (destructuring-bind ((value . turn) . past-env) env
-    (values value
-            turn
-            (value-turn past-env value))))
+  (values (env-last env)
+          (env-turn env)
+          (cdr (gethash (env-last env) (env-hash env)))))
 
 (defun speak (env turn value)
-  (values (acons value turn env)
-          turn))
+  (setf (env-turn env) turn)
+  (setf (env-last env) value)
+  (let ((cell (ensure-gethash value (env-hash env) (cons nil nil))))
+    (setf (cdr cell) (car cell))
+    (setf (car cell) turn))
+  (values env turn))
 
 (defun play (env)
   (multiple-value-bind (last-spoken turn past-turn) (last-spoken-value env)
@@ -43,9 +49,13 @@
 (defun part-1 ()
   (last-spoken-value (play-until *input* 2020)))
 
+(defun part-2 ()
+  (last-spoken-value (play-until *input* 30000000)))
+
 (define-test test
-  (assert (equalp (play-until '(0 3 6) 10)
-                  '((0 . 10) (4 . 9) (0 . 8) (1 . 7) (3 . 6)
-                    (3 . 5) (0 . 4) (6 . 3) (3 . 2) (0 . 1))))
   (assert (= 436 (last-spoken-value (play-until '(0 3 6) 2020))))
   (assert (= 249 (part-1))))
+
+;; unexported (long time)
+(define-test test-part-2
+  (assert (= 41687 (part-2))))
