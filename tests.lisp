@@ -35,23 +35,26 @@
              (return
                (and symbols (lambda () (map () #'funcall symbols)))))))))
 
-(defun %test-all-in-packages (packages &optional (force nil))
+(defun %test-all-in-packages (packages &key (force nil) (all nil))
   (let ((packages (ensure-list packages))
         (channel (make-channel))
         (res)
         (pass t)
         (submitted 0))
-    (dolist (package packages pass)
-      (do-external-symbols (symbol package)
-        (when-let ((function (and (get symbol 'test)
-                                  (fboundp symbol)
-                                  (symbol-function symbol))))
-          (when (or force (get symbol 'dirty))
-            (submit-task channel
-                         #'unit-test
-                         (incf submitted)
-                         symbol
-                         function)))))
+    (with-package-iterator (next packages :internal :external)
+      (loop
+        (multiple-value-bind (continue symbol access) (next)
+          (unless continue (return))
+          (when-let ((function (and (or all (eq access :external))
+                                    (get symbol 'test)
+                                    (fboundp symbol)
+                                    (symbol-function symbol))))
+            (when (or force (get symbol 'dirty))
+              (submit-task channel
+                           #'unit-test
+                           (incf submitted)
+                           symbol
+                           function))))))
     (do-fast-receives (result channel submitted)
       (push result res)
       (destructuring-bind (symbol error) (rest result)
@@ -74,12 +77,13 @@
 
 (defun test-all (&key
                  (force nil)
+                 (all nil)
                  (time nil)
                  (packages (aoc-packages))
                  (result-cb #'format-result))
   (let ((lock (load-time-value (bt:make-lock))))
     (bt:with-lock-held (lock)
-      (flet ((test () (%test-all-in-packages packages force)))
+      (flet ((test () (%test-all-in-packages packages :force force :all all)))
         (multiple-value-bind (pass res) (if time (time (test)) (test))
           (values pass (funcall result-cb res)))))))
 
