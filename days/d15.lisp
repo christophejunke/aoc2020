@@ -8,7 +8,7 @@
 
 (defun play-until (list target-turn)
   (let ((env (z:collect-hash (z:scan 'list list)
-                             (z:scan-range :from 1)))
+                              (z:scan-range :from 1)))
         (turn (length list))
         past-turn
         last-spoken)
@@ -23,12 +23,12 @@
 (defun part-1 ()
   (play-until *input* 2020))
 
+(defun part-2 ()
+  (play-until *input* 30000000))
+
 (define-test test
   (assert (= 436 (play-until '(0 3 6) 2020)))
   (assert (= 249 (part-1))))
-
-(defun part-2 ()
-  (play-until *input* 30000000))
 
 (define-test test-part-2
   (assert (= 41687 (part-2))))
