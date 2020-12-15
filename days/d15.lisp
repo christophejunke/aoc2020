@@ -6,27 +6,19 @@
 
 (defvar *input* '(15 12 0 14 3 1))
 
-(defun make-env% (list &optional (turn 1) result)
-  (if list
-      (make-env% (rest list)
-                 (1+ turn)
-                 (acons (car list) turn result))
-      result))
-
-(defun make-env (list)
-  (let ((env (make-env% list)))
-    (values (alist-hash-table env) (cdar env))))
-
 (defun play-until (list target-turn)
-  (multiple-value-bind (env turn) (make-env list)
-    (let (past-turn last-spoken)
-      (loop
-        (let ((value (if past-turn (- turn past-turn) 0)))
-          (incf turn)
-          (shiftf past-turn (gethash value env) turn)
-          (setq last-spoken value))
-        (when (>= turn target-turn)
-          (return last-spoken))))))
+  (let ((env (z:collect-hash (z:scan 'list list)
+                             (z:scan-range :from 1)))
+        (turn (length list))
+        past-turn
+        last-spoken)
+    (loop
+      (let ((value (if past-turn (- turn past-turn) 0)))
+        (incf turn)
+        (shiftf past-turn (gethash value env) turn)
+        (setq last-spoken value))
+      (when (>= turn target-turn)
+        (return last-spoken)))))
 
 (defun part-1 ()
   (play-until *input* 2020))
