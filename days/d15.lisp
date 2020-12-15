@@ -20,23 +20,14 @@
 (defmacro last-spoken-value (form)
   `(nth-value 1 ,form))
 
-(defun speak (env turn value)
-  (let ((prev (shiftf (gethash value env) turn)))
-    (values env
-            turn
-            prev
-            value)))
-
-(defun play (env turn past-turn)
-  (if past-turn
-      (speak env (1+ turn) (- turn past-turn))
-      (speak env (1+ turn) 0)))
-
 (defun play-until (list target-turn)
   (multiple-value-bind (env turn) (make-env list)
     (let (past-turn last-spoken)
       (loop
-        (multiple-value-setq (env turn past-turn last-spoken) (play env turn past-turn))
+        (let ((value (if past-turn (- turn past-turn) 0)))
+          (incf turn)
+          (shiftf past-turn (gethash value env) turn)
+          (setq last-spoken value))
         (when (>= turn target-turn)
           (return (values env last-spoken)))))))
 
@@ -49,3 +40,10 @@
                     (3 . 5) (0 . 4) (6 . 3) (3 . 2) (0 . 1))))
   (assert (= 436 (last-spoken-value (play-until '(0 3 6) 2020))))
   (assert (= 249 (part-1))))
+
+(defun part-2 ()
+  (last-spoken-value (play-until *input* 30000000)))
+
+(define-test test-part-2
+  (assert (= 41687 (part-2))))
+
