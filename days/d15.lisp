@@ -15,19 +15,17 @@
 
 (defun make-env (list)
   (let ((env (make-env% list)))
-    (values env (cdar env))))
-
-(defun value-turn (env value)
-  (cdr (assoc value env)))
+    (values (alist-hash-table env) (cdar env))))
 
 (defmacro last-spoken-value (form)
   `(nth-value 1 ,form))
 
 (defun speak (env turn value)
-  (values (acons value turn env)
-          turn
-          (value-turn env value)
-          value))
+  (let ((prev (shiftf (gethash value env) turn)))
+    (values env
+            turn
+            prev
+            value)))
 
 (defun play (env turn past-turn)
   (if past-turn
