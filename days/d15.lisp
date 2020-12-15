@@ -17,28 +17,25 @@
   (cdr (assoc value env)))
 
 (defun last-spoken-value (env)
-  (destructuring-bind ((value . turn) . _) env
-    (declare (ignore _))
-    (values value turn)))
+  (caar env))
 
 (defun speak (env turn value)
   (values (acons value turn env)
           turn
           (value-turn env value)))
 
-(defun play (env past-turn)
-  (multiple-value-bind (last-spoken turn) (last-spoken-value env)
-    (declare (ignore last-spoken))
-    (if past-turn
-        (speak env (1+ turn) (- turn past-turn))
-        (speak env (1+ turn) 0))))
+(defun play (env turn past-turn)
+  (if past-turn
+      (speak env (1+ turn) (- turn past-turn))
+      (speak env (1+ turn) 0)))
 
 (defun play-until (list target-turn)
-  (let ((env (make-env list)) (turn 0) (past-turn))
-    (loop
-      (multiple-value-setq (env turn past-turn) (play env past-turn))
-      (when (>= turn target-turn)
-        (return env)))))
+  (let ((env (make-env list)) past-turn)
+    (let ((turn (cdar env)))
+      (loop
+        (multiple-value-setq (env turn past-turn) (play env turn past-turn))
+        (when (>= turn target-turn)
+          (return env))))))
 
 (defun part-1 ()
   (last-spoken-value (play-until *input* 2020)))
