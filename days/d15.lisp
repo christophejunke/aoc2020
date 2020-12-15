@@ -8,7 +8,7 @@
 
 (defun play-until (list target-turn)
   (let ((env (z:collect-hash (z:scan 'list list)
-                              (z:scan-range :from 1)))
+                             (z:scan-range :from 1)))
         (turn (length list))
         past-turn
         last-spoken)
