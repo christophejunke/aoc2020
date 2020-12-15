@@ -6,12 +6,16 @@
 
 (defvar *input* '(15 12 0 14 3 1))
 
-(defun make-env (list &optional (turn 1) result)
+(defun make-env% (list &optional (turn 1) result)
   (if list
-      (make-env (rest list)
-                (1+ turn)
-                (acons (car list) turn result))
+      (make-env% (rest list)
+                 (1+ turn)
+                 (acons (car list) turn result))
       result))
+
+(defun make-env (list)
+  (let ((env (make-env% list)))
+    (values env (cdar env))))
 
 (defun value-turn (env value)
   (cdr (assoc value env)))
@@ -31,8 +35,8 @@
       (speak env (1+ turn) 0)))
 
 (defun play-until (list target-turn)
-  (let ((env (make-env list)) past-turn last-spoken)
-    (let ((turn (cdar env)))
+  (multiple-value-bind (env turn) (make-env list)
+    (let (past-turn last-spoken)
       (loop
         (multiple-value-setq (env turn past-turn last-spoken) (play env turn past-turn))
         (when (>= turn target-turn)
