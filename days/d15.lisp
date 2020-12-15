@@ -16,13 +16,14 @@
 (defun value-turn (env value)
   (cdr (assoc value env)))
 
-(defun last-spoken-value (env)
-  (caar env))
+(defmacro last-spoken-value (form)
+  `(nth-value 1 ,form))
 
 (defun speak (env turn value)
   (values (acons value turn env)
           turn
-          (value-turn env value)))
+          (value-turn env value)
+          value))
 
 (defun play (env turn past-turn)
   (if past-turn
@@ -30,12 +31,12 @@
       (speak env (1+ turn) 0)))
 
 (defun play-until (list target-turn)
-  (let ((env (make-env list)) past-turn)
+  (let ((env (make-env list)) past-turn last-spoken)
     (let ((turn (cdar env)))
       (loop
-        (multiple-value-setq (env turn past-turn) (play env turn past-turn))
+        (multiple-value-setq (env turn past-turn last-spoken) (play env turn past-turn))
         (when (>= turn target-turn)
-          (return env))))))
+          (return (values env last-spoken)))))))
 
 (defun part-1 ()
   (last-spoken-value (play-until *input* 2020)))
