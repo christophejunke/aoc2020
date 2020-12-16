@@ -18,16 +18,23 @@ test-from-scratch :
 	--eval '(or (aoc2020:test-all) (sb-ext:quit :unix-status -1))' \
 	--quit
 
-# NON-PORTABLE, this is mostly to have an example of how to run it
+# MAKEFILE
 #
-# inside the toplevel, you can query:
+# Non-portable, this is mostly to have an example of how to run it.
+#
+# Inside the toplevel, you can query:
 #
 #    [eclipse 1]: findall((C,D), candidate(C, D), L).
 #
-# this should return all C,D pairs for which candidate(C,D) holds.
+# This should return all C,D pairs for which candidate(C,D) holds.
 #
 # By loading library FD (finite domains), you can manipulate
 # constraints where the domain is a set of finite values.
+#
+# For example below, V and W have overlapping domains, and the equal
+# sign is unification, which means both variables must eventually be
+# bound to the same value. This constraints both domains by reducing
+# the set of possible values (intersection):
 #
 #    [eclipse 2]: lib(fd).
 #    [eclipse 3]: V :: [a,b,c], W :: [b,c,d], V = W.

@@ -219,6 +219,14 @@
                 for c in departure-cols
                 collect (aref (my-ticket in) c))))))
 
+
+;; HERE WE GENERATE THE PROLOG FILES THAT CONTAINS FACTS ABOUT OUR PUZZLE
+;;
+;; Those are clauses in the form:
+;;
+;;     candidate(column, [column_name, ...]).
+;;
+
 (defun format-prolog-facts (&optional (stream t) (in 16))
   (loop
     :for (col domain)
