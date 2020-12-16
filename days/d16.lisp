@@ -6,7 +6,7 @@
 
 (in-package :aoc2020.16)
 
-(defstruct input rules my-ticket nearby-tickets)
+(defstruct (input (:conc-name)) rules my-ticket nearby-tickets)
 
 (defun input (in)
   (let ((chunk 0) rules my-ticket nearby-tickets)
@@ -118,7 +118,7 @@
   (reduce #'intervals-unions intervals :initial-value nil))
 
 (defun input-rule-intervals (input)
-  (mappend 'rest (input-rules input)))
+  (mappend 'rest (rules input)))
 
 (defun part-1 (&optional (in 16))
   (let* ((input (input in))
@@ -126,13 +126,36 @@
     (z:collect-sum 
      (z:choose-if (lambda (u) (not (belongs-to u sdi)))
                   (z:scan-lists-of-lists-fringe
-                   (input-nearby-tickets input))))))
+                   (nearby-tickets input))))))
+
+(defun filtered-input (input)
+  (let ((sdi (fuse-intervals (input-rule-intervals input))))
+    (flet ((validp (u) (belongs-to u sdi)))
+      (make-input :my-ticket (my-ticket input)
+                  :rules (rules input)
+                  :nearby-tickets (loop
+                                    for ticket in (nearby-tickets input)
+                                    when (every #'validp ticket)
+                                    collect ticket)))))
 
 (define-test test
   (assert
-   (equalp (fuse-intervals (input-rule-intervals (input "16-sample")))
+   (equalp (fuse-intervals (input-rule-intervals (input "16-t1")))
            '((1 . 3) (5 . 11) (13 . 50))))
-  (assert (= (part-1 "16-input") 71))
-  (assert (= (part-1) 23009)))
-
+  (assert (= (part-1 "16-t1") 71))
+  (assert (= (part-1) 23009))
+  (assert (equalp (filtered-input (input "16-t1"))
+                  (load-time-value
+                   (make-input
+                    :rules '(("class" (1 . 3) (5 . 7)) ("row" (6 . 11) (33 . 44))
+                             ("seat" (13 . 40) (45 . 50)))
+                    :my-ticket '(7 1 14)
+                    :nearby-tickets '((7 3 47))))))
+  (assert (equalp (filtered-input (input "16-t2"))
+                  (load-time-value
+                   (make-input
+                    :rules '(("class" (0 . 1) (4 . 19)) ("row" (0 . 5) (8 . 19))
+                             ("seat" (0 . 13) (16 . 19)))
+                    :my-ticket '(11 12 13)
+                    :nearby-tickets '((3 9 18) (15 1 5) (5 14 9)))))))
 
