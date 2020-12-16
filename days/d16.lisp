@@ -128,41 +128,6 @@
                                     when (every #'validp ticket)
                                     collect (coerce ticket 'vector))))))
 
-(defun in (i)
-  (let ((input (filtered-input (input i))))
-    (loop
-      with cols = (make-array (length (rules input)) :initial-element nil)
-      for entry in (nearby-tickets input)
-      do (loop for i below (length cols) do (push (aref entry i) (aref cols i)))
-      finally (return (values input (coerce cols 'list))))))
-
-(defun candidate-columns (cols rules)
-  (sort (loop
-          for i from 0
-          for column in cols
-          collect
-             (list i (coerce (loop
-                               for (name . sdi) in rules
-                               when (every (lambda (v) (belongs-to v sdi))
-                                           column)
-                               collect name)
-                             'vector)))
-        #'<
-        :key (compose #'length #'second)))
-
-(defun solve-candidates% (candidates except)
-  (when candidates
-    (destructuring-bind ((col domain) . candidates) candidates
-      (let ((new-domain (remove-if (lambda (v) (member v except)) domain)))
-        (case (length new-domain)
-          (0 (error "unsat"))
-          (1 (let ((n (aref new-domain 0)))
-               (acons n col (solve-candidates% candidates (cons n except)))))
-          (t (solve-candidates% candidates except)))))))
-
-(defun solve-candidates (candidates)
-  (solve-candidates% candidates nil))
-
 (define-test fusion-filter
   (assert
    (equalp (fuse-intervals (input-rule-intervals (input "16-t1")))
@@ -182,6 +147,55 @@
                     :my-ticket #(11 12 13)
                     :nearby-tickets '(#(3 9 18) #(15 1 5) #(5 14 9)))))))
 
+(defun filtered/cols (i)
+  (let ((input (filtered-input (input i))))
+    (loop
+      with cols = (make-array (length (rules input)) :initial-element nil)
+      for entry in (nearby-tickets input)
+      do (loop for i below (length cols) do (push (aref entry i) (aref cols i)))
+      finally (return (values input (coerce cols 'list))))))
+
+(defun candidate-columns (cols rules)
+  ;; collect (col #(n0 n1 ... nm)) for each column when n0 to nm are the names
+  ;; of rules that are satisfied by all the values in that column in nearby
+  ;; tickets. In other words, each vector is the domain of satisfiable rule
+  ;; names for each column.
+  (sort (loop
+          for i from 0
+          for column in cols
+          collect
+             (list i (coerce (loop
+                               for (name . sdi) in rules
+                               when (every (lambda (v) (belongs-to v sdi))
+                                           column)
+                               collect name)
+                             'vector)))
+        #'<
+        :key (compose #'length #'second)))
+
+;; Solve the constraint system by filtering domains. For example, if the list
+;; of candidates is '((0 #("a")) (1 #("a" "b"))), then column 1 is necessarily
+;; associated with rule "b", even though it could also be "a", because "a" is
+;; the only possible value for column 0.
+;;
+;; Sort according the length of domain and recursively prune domains. The
+;; function only keeps the columns for which there is only one value possible,
+;; which is sufficient for this puzzle (and in fact, there is a unique
+;; solution).
+
+(defun solve-candidates% (candidates except)
+  (when candidates
+    (destructuring-bind ((col domain) . candidates) candidates
+      (let ((new-domain (remove-if (lambda (v) (member v except)) domain)))
+        (case (length new-domain)
+          (0 (error "unsat"))
+          (1 (let ((n (aref new-domain 0)))
+               (acons n col (solve-candidates% candidates (cons n except)))))
+          (t (solve-candidates% candidates except)))))))
+
+(defun solve-candidates (candidates)
+  (solve-candidates% candidates nil))
+
 ;;; PUZZLE SOLUTIONS
 
 (defun part-1 (&optional (in 16))
@@ -193,7 +207,7 @@
                    (nearby-tickets input))))))
 
 (defun part-2 (&optional in)
-  (multiple-value-bind (in cols) (in in)
+  (multiple-value-bind (in cols) (filtered/cols in)
     (let ((departure-cols
             (mapcar #'cdr
                     (remove-if-not (lambda (s) (search "departure" s))
