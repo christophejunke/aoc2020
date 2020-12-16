@@ -1,9 +1,6 @@
 (defpackage :aoc2020.16
   (:use :aoc2020)
-  (:export #:test
-           #:basic-unions
-           #:multi-unions
-           #:fusion-filter))
+  (:export #:test))
 
 (in-package :aoc2020.16)
 
