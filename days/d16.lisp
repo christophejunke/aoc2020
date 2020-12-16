@@ -46,10 +46,10 @@
     (a (list a))
     (b (list b))))
 
-;; SDI: sorted disjoint intervals (sorted by lower bound)
-;; AL, AH: bounds such that AL <= AH
-;; LEFT: recursion accumulator, left part of the split in reverse order
-;;
+;; SDI    : sorted disjoint intervals (sorted by lower bound)
+;; AL, AH : bounds such that AL <= AH
+;; LEFT   : left part of the split in reverse order (recursion accumulator)
+
 (defun split-at (sdi al ah left)
   "Split SDI at an interval (IL . IH) such that AL <= IL.
 
