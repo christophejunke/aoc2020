@@ -92,10 +92,11 @@
           (if-let (clauses (remove field body :test-not #'string= :key #'car))
             (add-initform field (map-into clauses #'second clauses))
             (warn "No rule for field ~s" field))))
-      `(let ((,hash-table (make-hash-table)))
-         ,@initforms
-         (defun ,fun-name (,key ,val-name)
-           (funcall (gethash ,key ,hash-table) ,val-name))))))
+      `(eval-when (:compile-toplevel :load-toplevel :execute)
+         (let ((,hash-table (make-hash-table)))
+           ,@initforms
+           (defun ,fun-name (,key ,val-name)
+             (funcall (gethash ,key ,hash-table) ,val-name)))))))
 
 (define-validator part-1/validp (v)
   ;; all fields are mandatory (v is not null), except CID

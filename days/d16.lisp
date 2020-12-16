@@ -28,7 +28,7 @@
                  (3 (setf nearby-tickets (section-2/3 lines))))))
       (map-line-chunks in #'process)
       (make-input :rules rules
-                  :my-ticket my-ticket
+                  :my-ticket (coerce my-ticket 'vector)
                   :nearby-tickets nearby-tickets))))
 
 (defun interval-union (a b)
@@ -58,8 +58,7 @@
      - the reverse left part of SDI excluding (IL . IH)
 
      - the right part of the split from the first interval (XL . XH), starting
-       from (IL . IH), where XH > AH.
-"
+       from (IL . IH), where XH > AH."
   (if sdi
       (destructuring-bind (head . tail) sdi
         (if (<= al (car head))
@@ -67,47 +66,44 @@
             (split-at tail al ah (cons head left))))
       (values left nil)))
 
-(defun intervals-unions (disjoint-intervals interval)
+(defun intervals-unions (sdi interval)
+  "Union of INTERVAL with sorted disjoint intervals SDI"
   (if interval
       (destructuring-bind (il . ih) interval
         ;; rev-left is the reversed left part of split
         ;; right is the right part of the split
-        (multiple-value-bind (rev-left right) (split-at disjoint-intervals il ih ())
+        (multiple-value-bind (rev-left right) (split-at sdi il ih ())
           ;; I is an interval, IS is a list of disjoint intervals sorted by their
           ;; lower bound. I is either strictly below the first element of IS, or
           ;; can be fused with it. Function U computes the new IS by joining I
           ;; with the first element of IS.
           (flet ((U (i is) (nconc (interval-union i (first is)) (rest is))))
             (revappend (rest rev-left) (U (first rev-left) (U interval right))))))
-      disjoint-intervals))
-
-(defmacro check-union (a &key with is)
-  `(assert (equalp ',is (interval-union ',a ',with))))
+      sdi))
 
 (define-test basic-unions
-  (progn
-    (check-union (5 . 8)  :with (0 . 10) :is ((0 . 10)))
-    (check-union (0 . 6)  :with (4 . 10) :is ((0 . 10)))
-    (check-union (7 . 10) :with (0 . 8) :is ((0 . 10)))
-    (check-union (0 . 6)  :with (7 . 10) :is ((0 . 10)))
-    (check-union (7 . 10) :with (0 . 3) :is ((0 . 3) (7 . 10)))))
-
-(defmacro check-unions (in &key is with)
-  `(assert (equalp ',is (intervals-unions ,with ',in))))
+  (macrolet ((check (a &key with is)
+               `(assert (equalp ',is (interval-union ',a ',with)))))
+    (check (5 . 8)  :with (0 . 10) :is ((0 . 10)))
+    (check (0 . 6)  :with (4 . 10) :is ((0 . 10)))
+    (check (7 . 10) :with (0 . 8)  :is ((0 . 10)))
+    (check (0 . 6)  :with (7 . 10) :is ((0 . 10)))
+    (check (7 . 10) :with (0 . 3)  :is ((0 . 3) (7 . 10)))))
 
 (define-test multi-unions
-  (let ((sdi '((0 . 3) (5 . 8) (10 . 13) (15 . 16))))
-    (check-unions ( 1  . 1) :with sdi :is ((0 . 3) (5 . 8) (10 . 13) (15 . 16)))
-    (check-unions ( 1  . 4) :with sdi :is ((0 . 8) (10 . 13) (15 . 16)))
-    (check-unions ( 4  . 4) :with sdi :is ((0 . 8) (10 . 13) (15 . 16)))
-    (check-unions (20 . 24) :with sdi :is ((0 . 3) (5 . 8) (10 . 13) (15 . 16) (20 . 24)))
-    (check-unions (14 . 14) :with sdi :is ((0 . 3) (5 . 8) (10 . 16)))
-    (check-unions ( 5 . 25) :with sdi :is ((0 . 3) (5 . 25)))
-    (check-unions ( 5 . 13) :with sdi :is ((0 . 3) (5 . 13) (15 . 16)))
-    (check-unions ( 4 . 13) :with sdi :is ((0 . 13) (15 . 16)))
-    (check-unions (20 . 24) :with sdi :is ((0 . 3) (5 . 8) (10 . 13) (15 . 16) (20 . 24)))
-    (check-unions (20 . 24) :with ()  :is ((20 . 24)))
-    (check-unions ()        :with ()  :is ())))
+  (macrolet ((check (in &key is with)
+               `(assert (equalp ',is (intervals-unions ,with ',in)))))
+    (let ((sdi '((0 . 3) (5 . 8) (10 . 13) (15 . 16))))
+      (check ( 1  . 1) :with sdi :is ((0 . 3) (5 . 8) (10 . 13) (15 . 16)))
+      (check ( 1  . 4) :with sdi :is ((0 . 8) (10 . 13) (15 . 16)))
+      (check ( 4  . 4) :with sdi :is ((0 . 8) (10 . 13) (15 . 16)))
+      (check (20 . 24) :with sdi :is ((0 . 3) (5 . 8) (10 . 13) (15 . 16) (20 . 24)))
+      (check (14 . 14) :with sdi :is ((0 . 3) (5 . 8) (10 . 16)))
+      (check ( 5 . 25) :with sdi :is ((0 . 3) (5 . 25)))
+      (check ( 5 . 13) :with sdi :is ((0 . 3) (5 . 13) (15 . 16)))
+      (check ( 4 . 13) :with sdi :is ((0 . 13) (15 . 16)))
+      (check (20 . 24) :with ()  :is ((20 . 24)))
+      (check ()        :with ()  :is ()))))
 
 (defun belongs-to (x sdi)
   (some (lambda (i) (<= (car i) x (cdr i))) sdi))
@@ -119,9 +115,10 @@
   (mappend 'rest (rules input)))
 
 (defun filtered-input (input)
+  "Only keep valid nearby tickets from INPUT"
   (let ((sdi (fuse-intervals (input-rule-intervals input))))
     (flet ((validp (u) (belongs-to u sdi)))
-      (make-input :my-ticket (coerce (my-ticket input) 'vector)
+      (make-input :my-ticket (my-ticket input)
                   :rules (rules input)
                   :nearby-tickets (loop
                                     for ticket in (nearby-tickets input)
@@ -148,6 +145,12 @@
                     :nearby-tickets '(#(3 9 18) #(15 1 5) #(5 14 9)))))))
 
 (defun filtered/cols (i)
+  "Return a FILTERED input and a list of COLUMNS for nearby tickets.
+
+- The filtered input only retains valid nearby tickets.
+
+- Each column is the list of values associated with the same field in nearby
+  tickets."
   (let ((input (filtered-input (input i))))
     (loop
       with cols = (make-array (length (rules input)) :initial-element nil)
@@ -160,37 +163,45 @@
   ;; of rules that are satisfied by all the values in that column in nearby
   ;; tickets. In other words, each vector is the domain of satisfiable rule
   ;; names for each column.
+  "Candidate columns for each rule
+
+The result is list of (i #(names ...)) couples, sorted by the length of the
+second element in tuple, which is a set of all possible names for its
+associated column number."
   (sort (loop
           for i from 0
           for column in cols
           collect
-             (list i (coerce (loop
-                               for (name . sdi) in rules
-                               when (every (lambda (v) (belongs-to v sdi))
-                                           column)
-                               collect name)
-                             'vector)))
+             (loop
+               for (name . sdi) in rules
+               when (every (lambda (v) (belongs-to v sdi)) column)
+               collect name into names
+               and count t into size
+               finally (return (list i size names))))
         #'<
-        :key (compose #'length #'second)))
-
-;; Solve the constraint system by filtering domains. For example, if the list
-;; of candidates is '((0 #("a")) (1 #("a" "b"))), then column 1 is necessarily
-;; associated with rule "b", even though it could also be "a", because "a" is
-;; the only possible value for column 0.
-;;
-;; Sort according the length of domain and recursively prune domains. The
-;; function only keeps the columns for which there is only one value possible,
-;; which is sufficient for this puzzle (and in fact, there is a unique
-;; solution).
+        :key (compose #'second)))
 
 (defun solve-candidates% (candidates except)
+  "Compute an alist of (name . column) entries.
+
+This maps each rule name to a CSV column in tickets."
+  ;; Solve the constraint system by filtering domains. For example, if the
+  ;; list of candidates is '((0 #("a")) (1 #("a" "b"))), then column 1 is
+  ;; necessarily associated with rule "b", even though it could also be "a",
+  ;; because "a" is the only possible value for column 0.
+  ;;
+  ;; The function only keeps the columns for which there is only one value
+  ;; possible, which is sufficient for this puzzle (and in fact, there is a
+  ;; unique solution).
   (when candidates
-    (destructuring-bind ((col domain) . candidates) candidates
+    (destructuring-bind ((col size domain) . candidates) candidates
+      (declare (ignore size))
       (let ((new-domain (remove-if (lambda (v) (member v except)) domain)))
-        (case (length new-domain)
-          (0 (error "unsat"))
-          (1 (let ((n (aref new-domain 0)))
-               (acons n col (solve-candidates% candidates (cons n except)))))
+        (cond
+          ((not new-domain) (error "unsat"))
+          ((not (rest new-domain))
+           (let ((n (first new-domain)))
+             (acons n col (solve-candidates% candidates (cons n except)))))
           (t (solve-candidates% candidates except)))))))
 
 (defun solve-candidates (candidates)
@@ -207,17 +218,18 @@
                    (nearby-tickets input))))))
 
 (defun part-2 (&optional in)
-  (multiple-value-bind (in cols) (filtered/cols in)
-    (let ((departure-cols
-            (mapcar #'cdr
-                    (remove-if-not (lambda (s) (search "departure" s))
-                                   (solve-candidates
-                                    (candidate-columns cols (rules in)))
-                                   :key #'car))))
-      (reduce #'*
-              (loop
-                for c in departure-cols
-                collect (aref (my-ticket in) c))))))
+  (flet ((departurep (s) (starts-with-subseq "departure" s)))
+    (multiple-value-bind (in cols) (filtered/cols in)
+      (z:collect-product
+       (z:map-fn 'fixnum
+                 (lambda (index) (aref (my-ticket in) index))
+                 (z:choose
+                  (z:mapping (((k v)
+                               (z:scan-alist
+                                (solve-candidates
+                                 (candidate-columns cols
+                                                    (rules in))))))
+                             (and (departurep k) v))))))))
 
 (define-test test
   (assert (= (part-1 "16-t1") 71))
