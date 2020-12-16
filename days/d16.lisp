@@ -118,14 +118,6 @@
 (defun input-rule-intervals (input)
   (mappend 'rest (rules input)))
 
-(defun part-1 (&optional (in 16))
-  (let* ((input (input in))
-         (sdi (fuse-intervals (input-rule-intervals input))))
-    (z:collect-sum
-     (z:choose-if (lambda (u) (not (belongs-to u sdi)))
-                  (z:scan-lists-of-lists-fringe
-                   (nearby-tickets input))))))
-
 (defun filtered-input (input)
   (let ((sdi (fuse-intervals (input-rule-intervals input))))
     (flet ((validp (u) (belongs-to u sdi)))
@@ -171,19 +163,6 @@
 (defun solve-candidates (candidates)
   (solve-candidates% candidates nil))
 
-(defun part-2 (&optional in)
-  (multiple-value-bind (in cols) (in in)
-    (let ((departure-cols
-            (mapcar #'cdr
-                    (remove-if-not (lambda (s) (search "departure" s))
-                                   (solve-candidates
-                                    (candidate-columns cols (rules in)))
-                                   :key #'car))))
-      (reduce #'*
-              (loop
-                for c in departure-cols
-                collect (aref (my-ticket in) c))))))
-
 (define-test fusion-filter
   (assert
    (equalp (fuse-intervals (input-rule-intervals (input "16-t1")))
@@ -202,6 +181,29 @@
                              ("seat" (0 . 13) (16 . 19)))
                     :my-ticket #(11 12 13)
                     :nearby-tickets '(#(3 9 18) #(15 1 5) #(5 14 9)))))))
+
+;;; PUZZLE SOLUTIONS
+
+(defun part-1 (&optional (in 16))
+  (let* ((input (input in))
+         (sdi (fuse-intervals (input-rule-intervals input))))
+    (z:collect-sum
+     (z:choose-if (lambda (u) (not (belongs-to u sdi)))
+                  (z:scan-lists-of-lists-fringe
+                   (nearby-tickets input))))))
+
+(defun part-2 (&optional in)
+  (multiple-value-bind (in cols) (in in)
+    (let ((departure-cols
+            (mapcar #'cdr
+                    (remove-if-not (lambda (s) (search "departure" s))
+                                   (solve-candidates
+                                    (candidate-columns cols (rules in)))
+                                   :key #'car))))
+      (reduce #'*
+              (loop
+                for c in departure-cols
+                collect (aref (my-ticket in) c))))))
 
 (define-test test
   (assert (= (part-1 "16-t1") 71))
