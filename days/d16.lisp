@@ -2,7 +2,8 @@
   (:use :aoc2020)
   (:export #:test
            #:basic-unions
-           #:multi-unions))
+           #:multi-unions
+           #:fusion-filter))
 
 (in-package :aoc2020.16)
 
@@ -123,7 +124,7 @@
 (defun part-1 (&optional (in 16))
   (let* ((input (input in))
          (sdi (fuse-intervals (input-rule-intervals input))))
-    (z:collect-sum 
+    (z:collect-sum
      (z:choose-if (lambda (u) (not (belongs-to u sdi)))
                   (z:scan-lists-of-lists-fringe
                    (nearby-tickets input))))))
@@ -131,31 +132,82 @@
 (defun filtered-input (input)
   (let ((sdi (fuse-intervals (input-rule-intervals input))))
     (flet ((validp (u) (belongs-to u sdi)))
-      (make-input :my-ticket (my-ticket input)
+      (make-input :my-ticket (coerce (my-ticket input) 'vector)
                   :rules (rules input)
                   :nearby-tickets (loop
                                     for ticket in (nearby-tickets input)
                                     when (every #'validp ticket)
-                                    collect ticket)))))
+                                    collect (coerce ticket 'vector))))))
 
-(define-test test
+(defun in (i)
+  (let ((input (filtered-input (input i))))
+    (loop
+      with cols = (make-array (length (rules input)) :initial-element nil)
+      for entry in (nearby-tickets input)
+      do (loop for i below (length cols) do (push (aref entry i) (aref cols i)))
+      finally (return (values input (coerce cols 'list))))))
+
+(defun candidate-columns (cols rules)
+  (sort (loop
+          for i from 0
+          for column in cols
+          collect
+             (list i (coerce (loop
+                               for (name . sdi) in rules
+                               when (every (lambda (v) (belongs-to v sdi))
+                                           column)
+                               collect name)
+                             'vector)))
+        #'<
+        :key (compose #'length #'second)))
+
+(defun solve-candidates% (candidates except)
+  (when candidates
+    (destructuring-bind ((col domain) . candidates) candidates
+      (let ((new-domain (remove-if (lambda (v) (member v except)) domain)))
+        (case (length new-domain)
+          (0 (error "unsat"))
+          (1 (let ((n (aref new-domain 0)))
+               (acons n col (solve-candidates% candidates (cons n except)))))
+          (t (solve-candidates% candidates except)))))))
+
+(defun solve-candidates (candidates)
+  (solve-candidates% candidates nil))
+
+(defun part-2 (&optional in)
+  (multiple-value-bind (in cols) (in in)
+    (let ((departure-cols
+            (mapcar #'cdr
+                    (remove-if-not (lambda (s) (search "departure" s))
+                                   (solve-candidates
+                                    (candidate-columns cols (rules in)))
+                                   :key #'car))))
+      (reduce #'*
+              (loop
+                for c in departure-cols
+                collect (aref (my-ticket in) c))))))
+
+(define-test fusion-filter
   (assert
    (equalp (fuse-intervals (input-rule-intervals (input "16-t1")))
            '((1 . 3) (5 . 11) (13 . 50))))
-  (assert (= (part-1 "16-t1") 71))
-  (assert (= (part-1) 23009))
   (assert (equalp (filtered-input (input "16-t1"))
                   (load-time-value
                    (make-input
                     :rules '(("class" (1 . 3) (5 . 7)) ("row" (6 . 11) (33 . 44))
                              ("seat" (13 . 40) (45 . 50)))
-                    :my-ticket '(7 1 14)
-                    :nearby-tickets '((7 3 47))))))
+                    :my-ticket #(7 1 14)
+                    :nearby-tickets '(#(7 3 47))))))
   (assert (equalp (filtered-input (input "16-t2"))
                   (load-time-value
                    (make-input
                     :rules '(("class" (0 . 1) (4 . 19)) ("row" (0 . 5) (8 . 19))
                              ("seat" (0 . 13) (16 . 19)))
-                    :my-ticket '(11 12 13)
-                    :nearby-tickets '((3 9 18) (15 1 5) (5 14 9)))))))
+                    :my-ticket #(11 12 13)
+                    :nearby-tickets '(#(3 9 18) #(15 1 5) #(5 14 9)))))))
+
+(define-test test
+  (assert (= (part-1 "16-t1") 71))
+  (assert (= (part-1) 23009))
+  (assert (= 10458887314153 (part-2 16))))
 
