@@ -219,6 +219,25 @@
                 for c in departure-cols
                 collect (aref (my-ticket in) c))))))
 
+(defun format-prolog-facts (&optional (stream t) (in 16))
+  (loop
+    :for (col domain)
+    :in (multiple-value-bind (in cols) (filtered/cols in)
+          (candidate-columns cols (rules in)))
+    :do (format stream
+                "~&candidate(~d, [~{'~a'~^, ~}]).~%"
+                col
+                (map 'list #'change-case:snake-case domain))))
+
+(defun to-prolog ()
+  (with-open-file (stream (asdf:system-relative-pathname :aoc2020
+                                                         "inputs/16-cstr.pl")
+                          :direction :output
+                          :if-exists :supersede)
+    (format-prolog-facts stream 16)
+    (pathname stream)))
+
+
 (define-test test
   (assert (= (part-1 "16-t1") 71))
   (assert (= (part-1) 23009))
