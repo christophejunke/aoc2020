@@ -84,17 +84,17 @@
   (aref #(- @) (at g c)))
 
 (defun test-sample (&aux g)
-  (let ((iterator (make-part-n-iterator *neighbours-4d* "17-t1" 4 8 24)))
+  (let ((iterator (make-part-n-iterator *neighbours-3d* "17-t1" 3 8 12)))
     (dotimes (x 7)
       (setf g (funcall iterator))
+      (print (map-grid-into nil #'pr g))
       (let ((c 0))
         (do-array (&rest z) g
           (incf c (at g z)))
-        (print (cons x c))))
-    (map-grid-into nil #'pr g)))
+        (print (cons x c))))))
 
 (defun part-1 (&aux (c 0))
-  (let ((iterator (make-part-1-iterator "17" 10 50)))
+  (let ((iterator (make-part-n-iterator *neighbours-3d* "17" 3 10 50)))
     (dotimes (x 7 c)
       (setf c 0)
       (let ((g (funcall iterator)))
@@ -106,8 +106,8 @@
         ))))
 
 (defun part-2 (&aux (c 0) g)
-  (let ((iterator (make-part-n-iterator *neighbours-4d* "17-t1" 4 10 15 )))
-    (dotimes (x 7 (progn (print g) c))
+  (let ((iterator (make-part-n-iterator *neighbours-4d* "17" 4 10 12)))
+    (dotimes (x 7 (progn (print (map-grid-into nil #'pr g)) c))
       (setf c 0)
       (setf g (funcall iterator))
       (do-array (&rest z) g
