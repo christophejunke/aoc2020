@@ -18,6 +18,7 @@
            #:read-grid
            #:map-grid-into
            #:fold-grid
+           #:do-array
            #:*neighbour-offsets*
            #:map-neighbours
            #:define-test
