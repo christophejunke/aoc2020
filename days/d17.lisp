@@ -5,7 +5,9 @@
 
 (defun input (&optional (in 17))
   (with-input (s in)
-    (read-grid s :transform (rcurry #'position ".#"))))
+    (read-grid s
+               :element-type 'bit
+               :transform (rcurry #'position ".#"))))
 
 (defun make-iterator (fn g1 &optional g2)
   (let ((f #'identity))
@@ -81,15 +83,15 @@
 (defun pr (g &rest c)
   (aref #(- @) (at g c)))
 
-(defun test-sample ()
-  (let ((iterator (make-part-n-iterator *neighbours-4d* "17-t1" 4 10 15)))
+(defun test-sample (&aux g)
+  (let ((iterator (make-part-n-iterator *neighbours-4d* "17-t1" 4 8 24)))
     (dotimes (x 7)
-      (let ((g (funcall iterator)) (c 0))
+      (setf g (funcall iterator))
+      (let ((c 0))
         (do-array (&rest z) g
           (incf c (at g z)))
-        ;; (print (map-grid-into nil #'pr g))
-        (print (cons x c))
-        (terpri)))))
+        (print (cons x c))))
+    (map-grid-into nil #'pr g)))
 
 (defun part-1 (&aux (c 0))
   (let ((iterator (make-part-1-iterator "17" 10 50)))
@@ -103,18 +105,18 @@
         ;; (terpri)
         ))))
 
-(defun part-2 (&aux (c 0))
-  (let ((iterator (make-part-n-iterator *neighbours-4d* "17" 4 12 30)))
-    (dotimes (x 7 c)
+(defun part-2 (&aux (c 0) g)
+  (let ((iterator (make-part-n-iterator *neighbours-4d* "17-t1" 4 10 15 )))
+    (dotimes (x 7 (progn (print g) c))
       (setf c 0)
-      (let ((g (funcall iterator)))
-        (do-array (&rest z) g
-          (incf c (apply #'aref g z)))
-        (print (cons x c))
-        ;; (print (map-grid-into nil (lambda (g z y x) (aref #(- @) (aref g z y x))) g))
-        ;; (print (cons x c))
-        ;; (terpri)
-        ))))
+      (setf g (funcall iterator))
+      (do-array (&rest z) g
+        (incf c (apply #'aref g z)))
+      (print (cons x c))
+      ;; (print (map-grid-into nil (lambda (g z y x) (aref #(- @) (aref g z y x))) g))
+      ;; (print (cons x c))
+      ;; (terpri)
+      )))
 
 
 (define-test test
