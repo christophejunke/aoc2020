@@ -9,7 +9,66 @@
 
 ;;; PRATT
 
+(defun unnext-char (c)
+  (when c (unread-char c)))
 
+(defun next-char ()
+  (read-char *standard-input* nil nil))
+
+(defun expect (c)
+  (let ((nc (next-char)))
+    (unless (eql c nc)
+      (error "expected char ~a but read ~a instead" c nc))))
+
+(defun peek-or-end (&optional (v t))
+  (peek-char v *standard-input* nil nil))
+
+(defun is (char)
+  (lambda (c) (and (eql c char) c)))
+
+(defun peek-read-if (test)
+  (when-let* ((c (peek-or-end nil))
+              (r (funcall test c)))
+    (prog1 r
+      (read-char))))
+
+(defun parse/integer (&optional (token nil))
+  (if-let (v (peek-read-if #'digit-char-p))
+    (parse/integer (if token (+ (* token 10) v) v))
+    token))
+
+(defun parse/paren ()
+  (when (peek-read-if (is #\())
+    (prog1 (parse/exp)
+      (expect #\)))))
+
+(defun peek/operator (&aux (c (peek-char)))
+  (case c
+    (#\+ (values '+ 3 4 #'next-char))
+    (#\* (values '* 1 2 #'next-char))))
+
+(defun parse/exp (&optional (min-bp 0))
+  (unless (eql #\) (peek-char t))
+    (let ((lhs (or (parse/integer)
+                   (parse/paren)
+                   (error "NO"))))
+      (loop
+        (case (peek-or-end)
+          ((#\) nil) (return lhs)))
+        (multiple-value-bind (op lbp rbp commit) (peek/operator)
+          (unless op
+            (error "no operator"))
+          (when (< lbp min-bp)
+            (return lhs))
+          (funcall commit)
+          (let ((rhs (or (parse/exp rbp)
+                         (error "no rhs!"))))
+            (setf lhs `(,op ,lhs ,rhs))))))))
+
+(with-input-from-string (*standard-input* "125 + 7 * 8 * 8 + 3")
+  (parse/exp))
+
+;; (* (* (+ 125 7) 8) (+ 8 3))
 
 ;;; EVAL
 
