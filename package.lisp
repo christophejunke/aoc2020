@@ -1,7 +1,7 @@
 (defpackage :aoc2020
   (:use . #1=(:cl :alexandria :ppcre :trivia
               :named-readtables :esrap :lparallel
-                  :aoc2020.fetch :aoc2020.utils))
+                  :aoc2020.fetch :aoc2020.utils :aoc2020.grids))
   (:export #:fold-input-lines
            #:do-input-lines
            #:with-input

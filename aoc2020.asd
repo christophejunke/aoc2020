@@ -10,12 +10,19 @@
                 :serial t
                 :components ((:file "lexer")
                              (:file "scanner")))
+               (:module #:GRIDS
+                :depends-on ("package")
+                :pathname "grids"
+                :serial t
+                :components ((:file "package")
+                             (:file "utils")
+                             (:file "macros")
+                             (:file "api")))
                (:file "inputs" :depends-on ("package" "setup"))
                (:file "tests" :depends-on ("package"))
-               (:file "grids" :depends-on ("package"))
                (:file "setup" :depends-on ("package" "tests"))
                (:module #:DAYS
-                :depends-on ("setup" "inputs" #:parsing "grids")
+                :depends-on ("setup" "inputs" #:parsing #:grids)
                 :pathname "days"
                 :serial nil
                 :components ((:file "d00")
