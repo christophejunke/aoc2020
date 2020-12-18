@@ -7,60 +7,9 @@
 
 (in-package :aoc2020.18)
 
-(in-readtable :fare-quasiquote)
+;;; PRATT
 
-(defun intern-operator (op)
-  (intern op :aoc2020.18))
 
-(defrule int (+ (digit-char-p character))
-  (:text t)
-  (:function parse-integer))
-
-(defrule op (and #\space (or #\+ #\* #\^) #\space)
-  (:function second)
-  (:text t)
-  (:function intern-operator))
-
-(defrule par (and #\( exp #\))
-  (:function second))
-
-(defrule atom (or par int))
-
-(defrule atom+ (and atom (+ (and op atom)))
-  (:destructure (lhs next) (cons lhs next)))
-
-(defrule atom* (or atom+ atom))
-
-;; EXP is either a NUMBER
-;;     or a list (E0 O1 E1 { On En })
-;;  where E0 to En are EXP
-;;    and O1 to On are operators
-
-(defrule exp atom*
-  (:destructure (lhs &rest ops)
-                (list* lhs (mappend #'identity ops))))
-
-;; Group terms by priorities and associativity
-
-(defun group-terms (expr right-bind-p)
-  (flet ((recurse (e) (group-terms e right-bind-p)))
-    (ematch expr
-      ((type number) expr)
-      ((list a o b) (list (recurse a) o (recurse b)))
-      ((list* a o1 b o2 rest)
-       (if (funcall right-bind-p o1 o2)
-           (recurse `(,a ,o1 (,b ,o2 ,@rest)))
-           (recurse `((,a ,o1 ,b) ,o2 ,@rest)))))))
-
-(defun parse-line (line &optional (< (constantly nil)))
-  (group-terms (parse 'exp line) <))
-
-(defun right-bind-p (right-assoc-p priority)
-  (lambda (o1 o2)
-    (if (eq o1 o2)
-        (funcall right-assoc-p o1)
-        (< (funcall priority o1)
-           (funcall priority o2)))))
 
 ;;; EVAL
 
