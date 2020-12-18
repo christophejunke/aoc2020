@@ -4,6 +4,8 @@
 
 (in-package :aoc2020.18)
 
+;; COMMON AST
+
 (defrule int (+ (digit-char-p character))
   (:text t)
   (:function parse-integer))
@@ -18,46 +20,42 @@
 
 (defrule atom (or par int))
 
-(defrule binop (and exp op atom)
-  (:destructure (e op a)
-    `(,op ,e ,a)))
+(defrule atom+ (and atom (+ (and op atom)))
+  (:destructure (lhs next) (cons lhs next)))
 
-(defrule exp (or binop atom))
+(defrule atom* (or atom+ atom))
 
-;; part 2
+;; EXP: a number or (A O1 B O2 C ...) where A B C are EXP
+(defrule exp atom*
+  (:destructure (lhs &rest ops)
+    (list* lhs (mappend #'identity ops))))
 
-(defrule apar (and #\( aexp #\))
-  (:function second))
+(defun group-by-priority (expr priority<)
+  (flet ((recurse (e) (group-by-priority e priority<)))
+    (ematch expr
+      ((type number) expr)
+      ((list a) (recurse a))
+      ((list a o b) (list (recurse a) o (recurse b)))
+      ((list* a o1 b o2 rest)
+       (if (funcall priority< o1 o2)
+           `(,(recurse a) ,o1 ,(recurse (list* b o2 rest)))
+           (recurse `((,a ,o1 ,b) ,o2 ,@rest)))))))
 
-(defrule aatom (or apar int))
-(defrule add/atom (or add aatom))
-
-(defrule add (and add/atom " + " add/atom)
-  (:destructure (lhs add rhs)
-    (declare (ignore add))
-    `(+ ,lhs ,rhs)))
-
-(defrule mult (and aexp " * " aexp)
-  (:destructure (lhs mult rhs)
-    (declare (ignore mult))
-    `(* ,lhs ,rhs)))
-
-(defrule aexp (or mult add aatom))
+(defun e (expr)
+  (ematch expr
+    ((type number) expr)
+    (`(,x + ,y) (+ (e x) (e y)))
+    (`(,x * ,y) (* (e x) (e y)))))
 
 (defun calc-1 (line)
-  (eval (parse 'exp line)))
+  (e (group-by-priority (parse 'exp line) (constantly nil))))
 
 (defun calc-2 (line)
-  (eval (parse 'aexp line)))
+  (flet ((priority< (o1 o2) (and (eq o1 '*) (eq o2 '+))))
+    (e (group-by-priority (parse 'exp line) #'priority<))))
 
 (defun part-n (calc)
   (fold-input-lines 18 (lambda (line acc) (+ acc (funcall calc line))) 0))
-
-(defun part-1 ()
-  (part-n #'calc-1))
-
-(defun part-2 ()
-  (part-n #'calc-2)))
 
 (define-test test
   (assert (= (calc-1 "2 * 3 + (4 * 5)") 26))
@@ -69,5 +67,5 @@
   (assert (= (calc-2 "5 + (8 * 3 + 9 + 3 * 4 * 3)") 1445))
   (assert (= (calc-2 "5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))") 669060))
   (assert (= (calc-2 "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2") 23340))
-  (assert (= (part-1) 131076645626))
-  (assert (= (part-2) 109418509151782)))
+  (assert (= (part-n #'calc-1) 131076645626))
+  (assert (= (part-n #'calc-2) 109418509151782)))
