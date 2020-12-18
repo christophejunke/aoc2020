@@ -2,7 +2,8 @@
   (:use :aoc2020)
   (:export #:test-solve
            #:test-parsing
-           #:test-associativity))
+           #:test-associativity
+           #:test-as-lisp))
 
 (in-package :aoc2020.18)
 
@@ -45,14 +46,13 @@
   (flet ((recurse (e) (group-terms e right-bind-p)))
     (ematch expr
       ((type number) expr)
-      ((list a) (recurse a))
       ((list a o b) (list (recurse a) o (recurse b)))
       ((list* a o1 b o2 rest)
        (if (funcall right-bind-p o1 o2)
            (recurse `(,a ,o1 (,b ,o2 ,@rest)))
            (recurse `((,a ,o1 ,b) ,o2 ,@rest)))))))
 
-(defun parse-line (line <)
+(defun parse-line (line &optional (< (constantly nil)))
   (group-terms (parse 'exp line) <))
 
 (defun right-bind-p (right-assoc-p priority)
@@ -64,12 +64,44 @@
 
 ;;; EVAL
 
+(defun i (expr)
+  (ematch expr
+    ((type number) expr)
+    (`(,x + ,y) `(+ ,(i x) ,(i y)))
+    (`(,x * ,y) `(* ,(i x) ,(i y)))
+    (`(,x ^ ,y) `(expt ,(i x) ,(i y)))))
+
 (defun e (expr)
   (ematch expr
     ((type number) expr)
     (`(,x + ,y) (+ (e x) (e y)))
     (`(,x * ,y) (* (e x) (e y)))
     (`(,x ^ ,y) (expt (e x) (e y)))))
+
+(defun fuse-p (op)
+  (member op '(+ *)))
+
+(defun simplify (expr)
+  (flet ((fuse (op1 term)
+           (multiple-value-bind (term op2) (simplify term)
+             (if (and (eq op1 op2) (fuse-p op1))
+                 (rest term)
+                 (list term)))))
+    (ematch expr
+      ((type number) expr)
+      (`(,op ,lhs ,rhs) (values `(,op ,@(fuse op lhs)
+                                      ,@(fuse op rhs))
+                                op)))))
+
+(defun as-lisp (expr)
+  (simplify (i expr)))
+
+(defvar *lisp<*
+  (right-bind-p (lambda (o) (member o '(^)))
+                (lambda (o) (rank o '(+ * ^)))))
+
+(defmacro check-as-lisp (in out)
+  `(assert (equalp (as-lisp (parse-line ,in *lisp<*)) ',out)))
 
 ;;; SUM VALUES
 
@@ -94,6 +126,14 @@
 (defmacro check-group (< exp expected)
   `(assert (equalp (group-terms (parse 'exp ,exp) ,<)
                    ',expected)))
+
+(define-test test-as-lisp
+  (check-as-lisp "5 + 7 + 8 + 1 + 3"
+                 (+ 5 7 8 1 3))
+  (check-as-lisp "5 ^ 7 ^ 8 ^ 1 ^ 3"
+                 (expt 5 (expt 7 (expt 8 (expt 1 3)))))
+  (check-as-lisp "5 + 7 * 8 * 9"
+                 (+ 5 (* 7 8 9))))
 
 (define-test test-parsing
   (check-parsing "5 + (8 * 3 + 9 + 3 * 4 * 3)"
