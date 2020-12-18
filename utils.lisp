@@ -8,7 +8,8 @@
            #:buffer-push
            #:with-buffer
            #:run-length-encoding
-           #:fold-hash-values))
+           #:fold-hash-values
+           #:rank))
 
 (in-package aoc2020.utils)
 
@@ -97,3 +98,24 @@
   (flet ((fold (v) (setf accumulator (funcall function accumulator v))))
     (maphash-values #'fold hash)
     accumulator))
+
+(defun rank (x list-designators)
+  "First position where X can be found in LIST-DESIGNATORS.
+
+   Each element in LIST-DESIGNATORS is
+   either a list of values, or a single
+   value. RANK returns the position of the
+   first element that is either EQL to X or
+   contains X.
+
+   For example:
+
+      (rank '^ '((+ -) (* /) ^)) => 2
+      (rank '+ '((+ -) (* /) ^)) => 0
+ "
+  (or (position-if (lambda (v)
+                     (typecase v
+                       (list (find x v))
+                       (t (eql x v))))
+                   list-designators)
+      (error "~a not found in ~a" x list-designators)))

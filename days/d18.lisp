@@ -8,8 +8,6 @@
 
 (in-readtable :fare-quasiquote)
 
-;; COMMON AST
-
 (defun intern-operator (op)
   (intern op :aoc2020.18))
 
@@ -32,13 +30,70 @@
 
 (defrule atom* (or atom+ atom))
 
-;; EXP: a number or (A O1 B O2 C ...) where A B C are EXP
+;; EXP is either a NUMBER
+;;     or a list (E0 O1 E1 { On En })
+;;  where E0 to En are EXP
+;;    and O1 to On are operators
+
 (defrule exp atom*
   (:destructure (lhs &rest ops)
                 (list* lhs (mappend #'identity ops))))
 
+;; Group terms by priorities and associativity
+
+(defun group-terms (expr right-bind-p)
+  (flet ((recurse (e) (group-terms e right-bind-p)))
+    (ematch expr
+      ((type number) expr)
+      ((list a) (recurse a))
+      ((list a o b) (list (recurse a) o (recurse b)))
+      ((list* a o1 b o2 rest)
+       (if (funcall right-bind-p o1 o2)
+           (recurse `(,a ,o1 (,b ,o2 ,@rest)))
+           (recurse `((,a ,o1 ,b) ,o2 ,@rest)))))))
+
+(defun parse-line (line <)
+  (group-terms (parse 'exp line) <))
+
+(defun right-bind-p (right-assoc-p priority)
+  (lambda (o1 o2)
+    (if (eq o1 o2)
+        (funcall right-assoc-p o1)
+        (< (funcall priority o1)
+           (funcall priority o2)))))
+
+;;; EVAL
+
+(defun e (expr)
+  (ematch expr
+    ((type number) expr)
+    (`(,x + ,y) (+ (e x) (e y)))
+    (`(,x * ,y) (* (e x) (e y)))
+    (`(,x ^ ,y) (expt (e x) (e y)))))
+
+;;; SUM VALUES
+
+(defun calc-1 (line)
+  (e (parse-line line (constantly nil))))
+
+(defun calc-2 (line)
+  (flet ((right-bind-p (o1 o2) (and (eq o1 '*) (eq o2 '+))))
+    (e (parse-line line #'right-bind-p))))
+
+(defun sum-line (calc)
+  (lambda (line acc) (+ acc (funcall calc line))))
+
+(defun part-n (calc)
+  (fold-input-lines 18 (sum-line calc) 0))
+
+;;; TESTS
+
 (defmacro check-parsing (string ast)
   `(assert (equalp (parse 'exp ,string) ',ast)))
+
+(defmacro check-group (< exp expected)
+  `(assert (equalp (group-terms (parse 'exp ,exp) ,<)
+                   ',expected)))
 
 (define-test test-parsing
   (check-parsing "5 + (8 * 3 + 9 + 3 * 4 * 3)"
@@ -46,61 +101,15 @@
   (check-parsing "5 + 2 ^ 4"
                  (5 + 2 ^ 4)))
 
-(defun group-by-priority (expr priority<)
-  (flet ((recurse (e) (group-by-priority e priority<)))
-    (ematch expr
-      ((type number) expr)
-      ((list a) (recurse a))
-      ((list a o b) (list (recurse a) o (recurse b)))
-      ((list* a o1 b o2 rest)
-       (if (funcall priority< o1 o2)
-           (recurse `(,a ,o1 (,b ,o2 ,@rest)))
-           (recurse `((,a ,o1 ,b) ,o2 ,@rest)))))))
-
-(defun priority< (right-assoc-p priority)
-  (lambda (o1 o2)
-    (if (eq o1 o2)
-        (funcall right-assoc-p o1)
-        (< (funcall priority o1)
-           (funcall priority o2)))))
-
-(defun rank (x sequence)
-  (or (position-if (lambda (v)
-                     (typecase v
-                       (symbol (eq x v))
-                       (sequence (find x v))))
-                   sequence)
-      (error "~a not found in ~a" x sequence)))
-
-(defmacro check-group (< exp expected)
-  `(assert (equalp (group-by-priority (parse 'exp ,exp) ,<)
-                   ',expected)))
-
 (define-test test-associativity
-  (let ((p< (priority< (lambda (o) (member o '(^)))
-                       (lambda (o) (rank o '(* + ^))))))
-    (check-group p<
+  (let ((binder (right-bind-p (lambda (o) (member o '(^)))
+                              (lambda (o) (rank o '(* + ^))))))
+    (check-group binder
                  "5 + (8 * 3 + 9 + 3 * 4 * 3)"
                  (5 + (8 * ((((3 + 9) + 3) * 4) * 3))))
-    (check-group p<
+    (check-group binder
                  "3 + 4 + 5 + 2 ^ 5 ^ 6"
                  (((3 + 4) + 5) + (2 ^ (5 ^ 6))))))
-
-(defun e (expr)
-  (ematch expr
-    ((type number) expr)
-    (`(,x + ,y) (+ (e x) (e y)))
-    (`(,x * ,y) (* (e x) (e y)))))
-
-(defun calc-1 (line)
-  (e (group-by-priority (parse 'exp line) (constantly nil))))
-
-(defun calc-2 (line)
-  (flet ((priority< (o1 o2) (and (eq o1 '*) (eq o2 '+))))
-    (e (group-by-priority (parse 'exp line) #'priority<))))
-
-(defun part-n (calc)
-  (fold-input-lines 18 (lambda (line acc) (+ acc (funcall calc line))) 0))
 
 (define-test test-solve
   (assert (= (calc-1 "2 * 3 + (4 * 5)") 26))
