@@ -4,6 +4,8 @@
 
 (in-package :aoc2020.18)
 
+(in-readtable :fare-quasiquote)
+
 ;; COMMON AST
 
 (defrule int (+ (digit-char-p character))

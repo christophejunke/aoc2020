@@ -1,5 +1,9 @@
 (defpackage :aoc2020.17
-  (:use :aoc2020))
+  (:use :aoc2020)
+  (:export #:test-1
+           #:test-2
+           #:test-3
+           #:test-4))
 
 (in-package :aoc2020.17)
 
@@ -28,8 +32,9 @@
                     (make-list dimension :initial-element '(-1 0 1)))
              :count 1))
 
-(defvar *neighbours*
-  (mapcar (lambda (d) (cons d (neighbourhood d))) '(3 4)))
+(defun dimension-neighbours (dimension)
+  (let ((alist (mapcar (lambda (d) (cons d (neighbourhood d))) '(3 4))))
+    (cdr (assoc dimension alist))))
 
 (defun new-state (grid coords cube neighbours-offsets)
   (let ((an (active-neighbours grid coords neighbours-offsets)))
@@ -38,7 +43,7 @@
       (1 (if (<= 2 an 3) 1 0)))))
 
 (defun make-transformers (dimension)
-  (let ((n (cdr (assoc dimension *neighbours*))))
+  (let ((n (dimension-neighbours dimension)))
     (assert n () "Unexpected dimension ~d" dimension)
     (values
      ;; expander
@@ -79,8 +84,14 @@
 (defun run (dimensions name &optional (n 6))
   (active-cubes (n-iterations n dimensions name)))
 
-(define-test test
-  (= (run 3 "17-sample") 112)
-  (= (run 4 "17-sample") 848)
-  (= (run 3 17) 386)
+(define-test test-1
+  (= (run 3 "17-sample") 112))
+
+(define-test test-2
+  (= (run 4 "17-sample") 848))
+
+(define-test test-3
+  (= (run 3 17) 386))
+
+(define-test test-4
   (= (run 4 17) 2276))
