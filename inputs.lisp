@@ -1,8 +1,13 @@
 (in-package :aoc2020)
 
+(defun call-with-input (in function)
+  (typecase in
+    (stream (funcall function in))
+    (t (with-open-file (stream (fetch-input in nil))
+         (funcall function stream)))))
+
 (defmacro with-input ((stream name) &body body)
-  `(with-open-file (,stream (aoc2020.fetch:fetch-input ,name nil))
-     ,@body))
+  `(call-with-input ,name (lambda (,stream) ,@body)))
 
 (defmacro do-input-lines ((line name &optional result) &body body)
   (with-gensyms (stream)
