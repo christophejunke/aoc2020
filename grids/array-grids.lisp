@@ -1,4 +1,4 @@
-(in-package :aoc2020)
+(in-package :aoc2020.grids)
 
 (defun read-grid (stream &key (element-type t) (transform #'identity))
   (loop
@@ -50,4 +50,3 @@
         :do (let ((x (+ x dx)) (y (+ y dy)))
              (when (array-in-bounds-p g y x)
                (funcall f (aref g y x))))))
-

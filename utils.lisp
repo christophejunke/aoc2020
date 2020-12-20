@@ -13,9 +13,13 @@
 
 (in-package aoc2020.utils)
 
+(defun find-package/error (package)
+  (or (find-package package)
+      (error "package not found: ~a" package)))
+
 (defun external-symbols (&rest packages &aux symbols)
   (dolist (package packages symbols)
-    (do-external-symbols (s (find-package package))
+    (do-external-symbols (s (find-package/error package))
       (push s symbols))))
 
 (defmacro defpackage/enum (enum-name &body body)

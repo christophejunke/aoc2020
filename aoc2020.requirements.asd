@@ -2,6 +2,7 @@
   :depends-on ("alexandria"
                "bordeaux-threads"
                "cl-ppcre"
+               "cl-algebraic-data-type"
                "drakma"
                "esrap"
                "lparallel"

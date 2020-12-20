@@ -1,7 +1,12 @@
 (defpackage :aoc2020.grids
   (:use :cl :alexandria)
   (:export
-   ;; LISP ARRAY TRAVERSAL
+   ;; LISP ARRAY UTILITIES
+   #:read-grid
+   #:map-grid-into
+   #:fold-grid
+   #:*neighbour-offsets*
+   #:map-neighbours
    #:do-array
 
    ;; INFINITE GRIDS
@@ -10,3 +15,4 @@
    #:fold-infinite-grid
    #:map-into-infinite-grid
    #:iref))
+

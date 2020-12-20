@@ -6,11 +6,15 @@
                (:module #:GRIDS
                 :depends-on ()
                 :pathname "grids"
-                :serial t
+                :serial nil
                 :components ((:file "package")
-                             (:file "utils")
+                             (:file "array-grids"
+                              :depends-on ("package"))
+                             (:file "utils" 
+                              :depends-on ("package"))
                              (:file "macros")
-                             (:file "api")))
+                             (:file "hash-grids"
+                              :depends-on ("macros" "package"))))
                (:file "package" :depends-on ("utils" "fetch" #:grids))
                (:module #:PARSING
                 :depends-on ("package")
