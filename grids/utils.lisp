@@ -18,7 +18,8 @@
          (labels ((,rec (,dims ,curr)
                     (cond
                       (,dims
-                       (z:iterate ((,c (z:scan-range :below (car ,dims))))
+                       (series:iterate 
+                         ((,c (series:scan-range :below (car ,dims))))
                          (setf (car ,curr) ,c)
                          (,rec (cdr ,dims) (cdr ,curr))))
                       (t 

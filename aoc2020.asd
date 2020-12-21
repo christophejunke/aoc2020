@@ -49,7 +49,13 @@
                              (:file "d16")
                              (:file "d17")
                              (:file "d18")
-                             (:file "d19")
+                             (:module "d19"
+                              :serial t
+                              :components ((:file "package")
+                                           (:file "grammar")
+                                           (:file "parsing")
+                                           (:file "cnf")
+                                           (:file "d19")))
                              (:file "d20")
                              (:file "d21")
                              (:file "d22")
