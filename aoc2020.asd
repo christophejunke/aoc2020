@@ -3,8 +3,9 @@
   :serial nil
   :components ((:file "utils")
                (:file "fetch")
+               (:file "series" :depends-on ("utils"))
                (:module #:GRIDS
-                :depends-on ()
+                :depends-on ("series")
                 :pathname "grids"
                 :serial t
                 :components ((:file "package")
@@ -19,9 +20,9 @@
                 :components ((:file "lexer")
                              (:file "scanner")))
 
-               (:file "inputs" :depends-on ("package" "setup"))
+               (:file "inputs" :depends-on ("package"))
                (:file "tests" :depends-on ("package"))
-               (:file "setup" :depends-on ("package" "tests"))
+               (:file "setup" :depends-on ("package" "tests" "series"))
                (:module #:DAYS
                 :depends-on ("setup" "inputs" #:parsing)
                 :pathname "days"

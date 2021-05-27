@@ -6,6 +6,7 @@
            #:test-as-lisp))
 
 (in-package :aoc2020.18)
+(in-readtable :fare-quasiquote)
 
 ;;; PRATT
 
@@ -103,6 +104,13 @@
 
 (defun as-lisp (expr)
   (simplify (i expr)))
+
+(defun right-bind-p (right-assoc-p priority)
+  (lambda (o1 o2)
+    (if (eq o1 o2)
+        (funcall right-assoc-p o1)
+        (< (funcall priority o1)
+           (funcall priority o2)))))
 
 (defvar *lisp<*
   (right-bind-p (lambda (o) (member o '(^)))
