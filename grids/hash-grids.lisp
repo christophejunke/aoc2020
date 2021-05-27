@@ -40,12 +40,11 @@
 
 (defun fold-infinite-grid (g f &optional (acc nil acc-p))
   (flet ((fold/acc (k v) (setf acc (funcall f g k v acc)))
-         (fold/nil (k v) (declare (optimize debug)) (funcall f g k v)))
+         (fold/nil (k v) (funcall f g k v)))
     (maphash (if acc-p #'fold/acc #'fold/nil) (.table g)))
   acc)
 
 (defun map-into-infinite-grid (target f source)
-  (declare (optimize (debug 3)))
   (prog1 target
     (flet ((visit (k v) 
              (when (numberp k)
